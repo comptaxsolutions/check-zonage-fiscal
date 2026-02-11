@@ -32,7 +32,7 @@ st.markdown("""
         text-align: center;
         text-transform: uppercase;
         border: 1px solid #34495e;
-        width: 18%; /* Ajusté */
+        width: 18%;
     }
     td:first-child {
         background-color: #f8f9fa;
@@ -51,6 +51,15 @@ st.markdown("""
         color: #333;
         line-height: 1.4;
     }
+    
+    /* Style spécifique pour la ligne ZONE */
+    .zone-row td {
+        background-color: #e8f5e9;
+        font-weight: bold;
+        color: #1b5e20;
+        text-align: center;
+        font-size: 1.1em;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -63,7 +72,7 @@ def load_data():
     url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
     
     try:
-        # Lecture intelligente (comme vu précédemment)
+        # Lecture intelligente pour trouver l'en-tête
         df_raw = pd.read_csv(url, header=None, dtype=str)
         header_row_idx = None
         for i, row in df_raw.iterrows():
@@ -77,6 +86,7 @@ def load_data():
         else:
             df = pd.read_csv(url, header=header_row_idx, dtype=str)
 
+        # Renommage des colonnes
         rename_map = {}
         for col in df.columns:
             c = col.lower()
@@ -87,7 +97,6 @@ def load_data():
             elif "frr" in c or "ruralités" in c: rename_map[col] = "FRR"
             elif "afr" in c: rename_map[col] = "AFR"
             elif "ber" in c: rename_map[col] = "BER"
-            # On ignore ZORCOMIR volontairement
 
         df = df.rename(columns=rename_map)
         
@@ -104,7 +113,7 @@ def load_data():
         return None
 
 # ==============================================================================
-# 3. MATRICE DE DONNÉES (COPIE EXACTE EXCEL UTILISATEUR)
+# 3. MATRICE DE DONNÉES (STATIQUE)
 # ==============================================================================
 DATA_MATRIX = {
     "ZFU": {
@@ -113,7 +122,7 @@ DATA_MATRIX = {
         "Periode": "Créations jusqu'au 31/12/2025<br><i>(prorogation LF 2026 – en attente)</i>",
         "Duree_exo": "100 % 5 ans, puis 60 % (6e année), 40 % (7e), 20 % (8e).",
         "Impots_locaux": "Possible exonération sur délibération locale (totale puis progressive)",
-        "Social": "Exonération spécifique (L.131-4-2)", # Pas nan mais implicite
+        "Social": "Exonération spécifique (L.131-4-2)",
         "Nature_activite": "Industrielles, commerciales, artisanales, BNC.<br><i>Exclusions : crédit-bail mobilier, location logements + certaines activités particulières</i>",
         "Regime_fiscal": "Tout régime (micro ou réel)",
         "Taille": "< 50 salariés, CA ≤ 10 M€ ou bilan ≤ 10 M€. Capital non détenu ≥ 25 % par grandes entreprises",
@@ -129,7 +138,7 @@ DATA_MATRIX = {
         "Periode": "Créations jusqu'au 31/12/2027",
         "Duree_exo": "100 % 2 ans, puis 75 % (3e), 50 % (4e), 25 % (5e).",
         "Impots_locaux": "Possible exonération sur délibération locale",
-        "Social": "Non", # nan dans fichier
+        "Social": "Non",
         "Nature_activite": "Industrielles, commerciales, artisanales, activités BNC exercées en société IS avec ≥ 3 salariés).<br><i>Exclusion activités particulières</i>",
         "Regime_fiscal": "Régime réel obligatoire",
         "Taille": "Pas de seuil général. Condition capital : pas détenu > 50 % par d'autres sociétés.",
@@ -175,7 +184,7 @@ DATA_MATRIX = {
         "Nom": "QPPV",
         "References_legales": "Décret n° 2023-1314 du 28 décembre 2023",
         "Periode": "Créations jusqu'au 31/12/2025<br><i>(prorogation LF 2026 – en attente)</i>",
-        "Duree_exo": "N/C", # Comme dans le fichier
+        "Duree_exo": "N/C",
         "Impots_locaux": "exonération TFPB 5 ans sauf délibération contraire collectivité",
         "Social": "nan",
         "Nature_activite": "N/C",
@@ -189,9 +198,37 @@ DATA_MATRIX = {
 }
 
 # ==============================================================================
-# 4. GÉNÉRATEUR HTML DU TABLEAU
+# 4. GÉNÉRATEUR HTML DU TABLEAU (DYNAMIQUE)
 # ==============================================================================
-def render_html_table(regimes):
+def get_zone_display(regime_key, row_data):
+    """Fonction pour formater l'affichage de la ligne ZONE selon les règles utilisateur"""
+    raw_val = ""
+    
+    # 1. Extraction de la valeur brute selon le régime
+    if regime_key == "ZFU":
+        raw_val = str(row_data.get('NB_ZFU', '')).strip()
+    elif regime_key == "QPV":
+        raw_val = str(row_data.get('NB_QPV', '')).strip()
+    elif regime_key == "AFR":
+        raw_val = str(row_data.get('AFR', '')).strip()
+    elif "ZFRR" in regime_key:
+        raw_val = str(row_data.get('FRR', '')).strip()
+        
+    # 2. Application des règles de formatage
+    if raw_val in ["Oui", "OUI", "oui"]:
+        return "Intégralement"
+    elif "Partiel" in raw_val:
+        return "Partiellement"
+    elif "maintenue" in raw_val:
+        return "ZRR maintenue"
+    elif raw_val in ["Non", "NON", "0", "nan", ""]:
+        return "-"
+    else:
+        # C'est probablement un chiffre (ex: "7") -> on l'affiche tel quel
+        return raw_val
+
+def render_html_table(regimes, row_data):
+    # Configuration des lignes statiques
     rows_config = [
         ("Références légales", "References_legales"),
         ("Période d'application", "Periode"),
@@ -208,18 +245,26 @@ def render_html_table(regimes):
     ]
 
     html = "<table>"
+    
+    # HEADER
     html += "<thead><tr><th>Critères</th>"
     for r in regimes:
         html += f"<th>{DATA_MATRIX[r]['Nom']}</th>"
     html += "</tr></thead><tbody>"
     
+    # --- NOUVELLE LIGNE : ZONE (DYNAMIQUE) ---
+    html += "<tr class='zone-row'><td>ZONE / CLASSEMENT</td>"
+    for r in regimes:
+        display_val = get_zone_display(r, row_data)
+        html += f"<td>{display_val}</td>"
+    html += "</tr>"
+    
+    # LIGNES STATIQUES
     for label, key in rows_config:
         html += f"<tr><td>{label}</td>"
         for r in regimes:
             val = DATA_MATRIX[r].get(key, "-")
-            # Gestion des cellules vides ou "nan"
-            if val == "nan" or pd.isna(val):
-                val = ""
+            if val == "nan" or pd.isna(val): val = ""
             html += f"<td>{val}</td>"
         html += "</tr>"
         
@@ -270,7 +315,7 @@ if df is not None:
             try:
                 if float(nb_zfu) > 0: is_zfu = True
             except:
-                is_zfu = True
+                is_zfu = True # Texte "Oui"
 
         if is_zfu and date_crea <= date(2025, 12, 31):
             detected.append("ZFU")
@@ -297,12 +342,15 @@ if df is not None:
         if detected:
             detected = list(dict.fromkeys(detected)) # Anti-doublon
             st.success(f"✅ {len(detected)} dispositif(s) identifié(s)")
-            st.markdown(render_html_table(detected), unsafe_allow_html=True)
+            
+            # On passe 'row' à la fonction pour afficher les données dynamiques (7 QPV, Intégralement...)
+            st.markdown(render_html_table(detected, row), unsafe_allow_html=True)
             
             if "ZFU" in detected or "QPV" in detected:
                  st.warning("⚠️ **Attention (ZFU / QPV)** : L'éligibilité dépend de l'adresse exacte (à la rue/parcelle). Vérifiez sur sig.ville.gouv.fr.")
+                 st.caption("")
         else:
             st.warning("Aucun dispositif zoné majeur détecté.")
 
 else:
-    st.error("Erreur de chargement. Vérifiez que votre fichier Google Sheet est bien partagé et que l'ID est correct.")
+    st.error("Erreur de chargement.")
