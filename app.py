@@ -106,85 +106,85 @@ DATA_MATRIX = {
     "ZFRR_PLUS": {
         "Nom": "ZFRR+ (Renforcée)",
         # --- JURIDIQUE ---
-        "Base_Legale": "CGI art. [cite_start]44 quindecies A [cite: 205]",
-        [cite_start]"Validite": "Création/Reprise jusqu'au 31/12/2029 [cite: 205]",
+        "Base_Legale": "CGI art. 44 quindecies A",
+        "Validite": "Création/Reprise jusqu'au 31/12/2029",
         # --- EFFETS FISCAUX ---
-        [cite_start]"IS_IR_Taux": "<span class='txt-green'>100% (5 ans)</span><br>75% (6e), 50% (7e), 25% (8e) [cite: 205]",
-        "IS_IR_Plafond": "200 000 € / 3 ex. (De Minimis)[cite_start]<br><span class='txt-small'>Plafond fiscal global</span> [cite: 205]",
-        [cite_start]"Impots_Locaux": "Sur délibération (CFE / TFPB) [cite: 205]",
+        "IS_IR_Taux": "<span class='txt-green'>100% (5 ans)</span><br>75% (6e), 50% (7e), 25% (8e)",
+        "IS_IR_Plafond": "200 000 € / 3 ex. (De Minimis)<br><span class='txt-small'>Plafond fiscal global</span>",
+        "Impots_Locaux": "Sur délibération (CFE / TFPB)",
         # --- EFFETS SOCIAUX ---
-        [cite_start]"Social": "<span class='txt-green'>OUI (Patronales)</span><br><span class='txt-small'>Jusqu'à 1.5 ou 2.4 SMIC</span> [cite: 205]",
+        "Social": "<span class='txt-green'>OUI (Patronales)</span><br><span class='txt-small'>Jusqu'à 1.5 ou 2.4 SMIC</span>",
         # --- CONDITIONS ENTREPRISE ---
-        [cite_start]"Regime_Imposition": "<span class='txt-green'>TOUT RÉGIME</span><br>Réel OU Micro-entreprise [cite: 212]",
-        [cite_start]"Effectif": "< 11 salariés [cite: 212]",
-        [cite_start]"Capital": "Détenu < 50% par d'autres sociétés [cite: 212]",
+        "Regime_Imposition": "<span class='txt-green'>TOUT RÉGIME</span><br>Réel OU Micro-entreprise",
+        "Effectif": "< 11 salariés",
+        "Capital": "Détenu < 50% par d'autres sociétés",
         # --- CONDITIONS ACTIVITÉ ---
-        [cite_start]"Activite": "Indus, Com, Art, Libérale<br><span class='txt-small'>Excl: Banque, Immo, Gestion</span> [cite: 212]",
-        [cite_start]"Localisation": "Siège social + Moyens d'exploitation<br><span class='txt-small'>Exclusivement en zone</span> [cite: 212]",
-        [cite_start]"Transfert": "<span class='txt-green'>ÉLIGIBLE</span><br><span class='txt-small'>Même sans transfert de clientèle (CE 2025)</span> [cite: 216]"
+        "Activite": "Indus, Com, Art, Libérale<br><span class='txt-small'>Excl: Banque, Immo, Gestion</span>",
+        "Localisation": "Siège social + Moyens d'exploitation<br><span class='txt-small'>Exclusivement en zone</span>",
+        "Transfert": "<span class='txt-green'>ÉLIGIBLE</span><br><span class='txt-small'>Même sans transfert de clientèle (CE 2025)</span>"
     },
     
     "ZFRR_CLASSIC": {
         "Nom": "ZFRR (Classique)",
         # --- JURIDIQUE ---
-        "Base_Legale": "CGI art. [cite_start]44 quindecies A [cite: 205]",
-        [cite_start]"Validite": "Création/Reprise jusqu'au 31/12/2029 [cite: 205]",
+        "Base_Legale": "CGI art. 44 quindecies A",
+        "Validite": "Création/Reprise jusqu'au 31/12/2029",
         # --- EFFETS FISCAUX ---
-        [cite_start]"IS_IR_Taux": "<span class='txt-green'>100% (5 ans)</span><br>75% (6e), 50% (7e), 25% (8e) [cite: 205]",
-        "IS_IR_Plafond": "200 000 € / 3 ex. (De Minimis) [cite_start][cite: 205]",
-        [cite_start]"Impots_Locaux": "Sur délibération (CFE / TFPB) [cite: 205]",
+        "IS_IR_Taux": "<span class='txt-green'>100% (5 ans)</span><br>75% (6e), 50% (7e), 25% (8e)",
+        "IS_IR_Plafond": "200 000 € / 3 ex. (De Minimis)",
+        "Impots_Locaux": "Sur délibération (CFE / TFPB)",
         # --- EFFETS SOCIAUX ---
-        [cite_start]"Social": "<span class='txt-green'>OUI (Patronales)</span><br><span class='txt-small'>Sous conditions L.131-4-2</span> [cite: 205]",
+        "Social": "<span class='txt-green'>OUI (Patronales)</span><br><span class='txt-small'>Sous conditions L.131-4-2</span>",
         # --- CONDITIONS ENTREPRISE ---
-        [cite_start]"Regime_Imposition": "<span class='txt-red'>RÉEL OBLIGATOIRE</span><br>Micro-entreprise EXCLUE [cite: 212]",
-        [cite_start]"Effectif": "< 11 salariés [cite: 212]",
-        [cite_start]"Capital": "Détenu < 50% par d'autres sociétés [cite: 212]",
+        "Regime_Imposition": "<span class='txt-red'>RÉEL OBLIGATOIRE</span><br>Micro-entreprise EXCLUE",
+        "Effectif": "< 11 salariés",
+        "Capital": "Détenu < 50% par d'autres sociétés",
         # --- CONDITIONS ACTIVITÉ ---
-        [cite_start]"Activite": "Indus, Com, Art, Libérale<br><span class='txt-small'>Excl: Banque, Immo, Gestion</span> [cite: 212]",
-        [cite_start]"Localisation": "Siège social + Moyens d'exploitation<br><span class='txt-small'>Exclusivement en zone</span> [cite: 212]",
-        [cite_start]"Transfert": "<span class='txt-green'>ÉLIGIBLE</span><br><span class='txt-small'>Jurisprudence CE 2-6-2025</span> [cite: 216]"
+        "Activite": "Indus, Com, Art, Libérale<br><span class='txt-small'>Excl: Banque, Immo, Gestion</span>",
+        "Localisation": "Siège social + Moyens d'exploitation<br><span class='txt-small'>Exclusivement en zone</span>",
+        "Transfert": "<span class='txt-green'>ÉLIGIBLE</span><br><span class='txt-small'>Jurisprudence CE 2-6-2025</span>"
     },
     
     "ZFU": {
         "Nom": "ZFU - TE (Territoire Entrepreneur)",
         # --- JURIDIQUE ---
-        "Base_Legale": "CGI art. [cite_start]44 octies A [cite: 205]",
-        [cite_start]"Validite": "Créations jusqu'au <span class='txt-red'>31/12/2025</span> [cite: 205]",
+        "Base_Legale": "CGI art. 44 octies A",
+        "Validite": "Créations jusqu'au <span class='txt-red'>31/12/2025</span>",
         # --- EFFETS FISCAUX ---
-        [cite_start]"IS_IR_Taux": "<span class='txt-green'>100% (5 ans)</span><br>60% (6e), 40% (7e), 20% (8e) [cite: 205]",
-        [cite_start]"IS_IR_Plafond": "50 000 € / an<br><span class='txt-small'>+ 5k€/salarié résidant</span> [cite: 205]",
-        [cite_start]"Impots_Locaux": "Sur délibération [cite: 205]",
+        "IS_IR_Taux": "<span class='txt-green'>100% (5 ans)</span><br>60% (6e), 40% (7e), 20% (8e)",
+        "IS_IR_Plafond": "50 000 € / an<br><span class='txt-small'>+ 5k€/salarié résidant</span>",
+        "Impots_Locaux": "Sur délibération",
         # --- EFFETS SOCIAUX ---
-        [cite_start]"Social": "Non Applicable (Zonage distinct)<br><span class='txt-small'>Voir exonérations spécifiques ZFU</span> [cite: 205]",
+        "Social": "Non Applicable (Zonage distinct)<br><span class='txt-small'>Voir exonérations spécifiques ZFU</span>",
         # --- CONDITIONS ENTREPRISE ---
-        [cite_start]"Regime_Imposition": "<span class='txt-green'>TOUT RÉGIME</span><br>Réel OU Micro [cite: 212]",
-        [cite_start]"Effectif": "< 50 salariés [cite: 212]",
-        [cite_start]"Capital": "< 25% détenu par entreprise > 250 sal. [cite: 212]",
+        "Regime_Imposition": "<span class='txt-green'>TOUT RÉGIME</span><br>Réel OU Micro",
+        "Effectif": "< 50 salariés",
+        "Capital": "< 25% détenu par entreprise > 250 sal.",
         # --- CONDITIONS ACTIVITÉ ---
-        [cite_start]"Activite": "Indus, Com, Art, BNC<br><span class='txt-small'>Excl: Location Immeuble (Hab/Com)</span> [cite: 212]",
-        [cite_start]"Localisation": "<span class='txt-orange'>STRICTE</span><br>Activité matérielle DANS le périmètre [cite: 212]",
-        [cite_start]"Transfert": "<span class='txt-red'>EXCLU</span><br>Sauf création d'activité nouvelle [cite: 212]"
+        "Activite": "Indus, Com, Art, BNC<br><span class='txt-small'>Excl: Location Immeuble (Hab/Com)</span>",
+        "Localisation": "<span class='txt-orange'>STRICTE</span><br>Activité matérielle DANS le périmètre",
+        "Transfert": "<span class='txt-red'>EXCLU</span><br>Sauf création d'activité nouvelle"
     },
 
     "AFR": {
         "Nom": "AFR (Aide Finalité Régionale)",
         # --- JURIDIQUE ---
-        "Base_Legale": "CGI art. [cite_start]44 sexies [cite: 205]",
-        [cite_start]"Validite": "Créations jusqu'au 31/12/2027 [cite: 205]",
+        "Base_Legale": "CGI art. 44 sexies",
+        "Validite": "Créations jusqu'au 31/12/2027",
         # --- EFFETS FISCAUX ---
-        [cite_start]"IS_IR_Taux": "<span class='txt-green'>100% (24 mois)</span><br>75% (3e), 50% (4e), 25% (5e) [cite: 205]",
-        [cite_start]"IS_IR_Plafond": "Règle De Minimis<br><span class='txt-small'>300 k€ sur 3 exercices</span> [cite: 205]",
-        [cite_start]"Impots_Locaux": "Sur délibération [cite: 205]",
+        "IS_IR_Taux": "<span class='txt-green'>100% (24 mois)</span><br>75% (3e), 50% (4e), 25% (5e)",
+        "IS_IR_Plafond": "Règle De Minimis<br><span class='txt-small'>300 k€ sur 3 exercices</span>",
+        "Impots_Locaux": "Sur délibération",
         # --- EFFETS SOCIAUX ---
-        [cite_start]"Social": "Non Applicable [cite: 205]",
+        "Social": "Non Applicable",
         # --- CONDITIONS ENTREPRISE ---
-        [cite_start]"Regime_Imposition": "<span class='txt-red'>RÉEL OBLIGATOIRE</span> [cite: 212]",
-        [cite_start]"Effectif": "PME < 250 salariés [cite: 212]",
-        [cite_start]"Capital": "< 25% détenu par entreprise > 250 sal. [cite: 212]",
+        "Regime_Imposition": "<span class='txt-red'>RÉEL OBLIGATOIRE</span>",
+        "Effectif": "PME < 250 salariés",
+        "Capital": "< 25% détenu par entreprise > 250 sal.",
         # --- CONDITIONS ACTIVITÉ ---
-        [cite_start]"Activite": "Indus, Com, Art<br><span class='txt-small'>BNC éligible uniquement en Société IS</span> [cite: 212]",
-        [cite_start]"Localisation": "Siège social + Activité [cite: 212]",
-        [cite_start]"Transfert": "Éligible sous conditions (Extension) [cite: 212]"
+        "Activite": "Indus, Com, Art<br><span class='txt-small'>BNC éligible uniquement en Société IS</span>",
+        "Localisation": "Siège social + Activité",
+        "Transfert": "Éligible sous conditions (Extension)"
     },
 
     "BER": {
