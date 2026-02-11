@@ -67,9 +67,9 @@ st.markdown("""
 @st.cache_data(ttl=600)
 def load_data():
     # 👇👇👇 TON ID GOOGLE SHEET ICI 👇👇👇
-    sheet_id = "TON_ID_GOOGLE_SHEET_ICI" 
+    sheet_id = "1XwJM0unxho3qPpxRohA_w8Ou9-gP8bHqguPQeD0aI2I" 
     
-    url = f"https://docs.google.com/spreadsheets/d/1XwJM0unxho3qPpxRohA_w8Ou9-gP8bHqguPQeD0aI2I/export?format=csv"
+    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
     try:
         df = pd.read_csv(url, dtype=str)
         # Création de la colonne recherche
@@ -138,4 +138,130 @@ def afficher_details_regime(type_regime):
         <div class="checklist-box" style="border-left-color: #e67e22;">
             <div class="checklist-header">
                 <span class="checklist-title">📋 ZFU-TE (Territoire Entrepreneur)</span>
-                <span class="badge-scope">Cré
+                <span class="badge-scope">Création uniquement</span>
+            </div>
+            <div class="benefits-box">
+                💰 <b>Avantages :</b> Exonération IS/IR (100% 5 ans) jusqu'à 50 000 € de bénéfice + 5k€/salarié.
+            </div>
+            <ul>
+                <li><b>Date limite :</b> Créations jusqu'au <b>31/12/2025</b>.</li>
+                <li><b>Régime Fiscal :</b> <span style="color:green; font-weight:bold;">TOUT RÉGIME</span> (Micro accepté).</li>
+                <li><b>Clause d'embauche :</b> Dès le 2ème salarié, 50% résidents ZFU/QPV.</li>
+                <li><b>Localisation :</b> Activité matérielle et effective DANS le périmètre (bureau/atelier).</li>
+                <li><b>Effectif :</b> Moins de 50 salariés.</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    # --- AFR ---
+    elif type_regime == "AFR":
+        st.markdown(f"""
+        <div class="checklist-box" style="border-left-color: #2980b9;">
+            <div class="checklist-header">
+                <span class="checklist-title">📋 ZAFR (Aide Finalité Régionale)</span>
+                <span class="badge-scope">Création</span>
+            </div>
+            <div class="benefits-box">
+                💰 <b>Avantages :</b> Exonération 100% (24 mois) puis dégressif.
+            </div>
+            <ul>
+                <li><b>Régime Fiscal :</b> <span style="color:red; font-weight:bold;">RÉEL OBLIGATOIRE</span>.</li>
+                <li><b>Forme :</b> Sociétés soumises à l'IS (pour les activités libérales).</li>
+                <li><b>Plafond :</b> Règles "de minimis" (300 k€ sur 3 ans).</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # --- BER ---
+    elif type_regime == "BER":
+        st.markdown(f"""
+        <div class="checklist-box" style="border-left-color: #8e44ad;">
+            <div class="checklist-header">
+                <span class="checklist-title">📋 BER (Bassin d'Emploi)</span>
+                <span class="badge-scope">Création • Reprise</span>
+            </div>
+            <div class="benefits-box">
+                💰 <b>Avantages :</b> Exonération Totale Impôts + Charges Sociales Patronales.
+            </div>
+            <ul>
+                <li><b>Activité :</b> Industrielle, commerciale, artisanale.</li>
+                <li><b>PME :</b> Effectif < 250 salariés, CA < 50 M€.</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+
+
+# ==============================================================================
+# 4. INTERFACE PRINCIPALE
+# ==============================================================================
+
+df = load_data()
+
+st.title("Fiscal-Check HDF")
+st.caption("Comparateur de régimes - Mise à jour Documentaire Sept 2025")
+st.write("---")
+
+if df is not None:
+    # --- ZONE DE SAISIE (Simplifiée) ---
+    with st.container():
+        c1, c2 = st.columns(2)
+        with c1:
+            choix_commune = st.selectbox("📍 Commune", df['Label_Recherche'], index=None, placeholder="Tapez Amiens...")
+        with c2:
+            date_crea = st.date_input("📅 Date de l'opération", date.today(), format="DD/MM/YYYY")
+        
+        # SUPPRESSION DU BOUTON CREATION/REPRISE ICI
+        # L'info est désormais donnée dans chaque bloc "Champ d'application"
+
+    # --- LOGIQUE DE DÉTECTION ET AFFICHAGE ---
+    if choix_commune:
+        row = df[df['Label_Recherche'] == choix_commune].iloc[0]
+        st.divider()
+        st.subheader(f"Analyse pour : {row['COMMUNE']}")
+
+        # 1. ANALYSE FRANCE RURALITÉS (ZFRR+ vs ZFRR)
+        DATE_FRR = date(2024, 7, 1)
+        valeur_frr = str(row['FRR']).strip().upper() # On met en majuscule pour éviter les erreurs
+        
+        # On vérifie si c'est une zone FRR
+        if valeur_frr in ['FRR', 'FRR+', 'ZRR MAINTENUE', 'OUI']:
+            
+            # Si on est après la date de réforme
+            if date_crea >= DATE_FRR:
+                # DISTINCTION ZFRR+ / ZFRR CLASSIQUE
+                if "FRR+" in valeur_frr:
+                    st.success("✅ **ÉLIGIBLE ZFRR+ (Renforcée)**")
+                    afficher_details_regime("ZFRR_PLUS")
+                else:
+                    st.success("✅ **ÉLIGIBLE ZFRR (Classique)**")
+                    afficher_details_regime("ZFRR_CLASSIC")
+            else:
+                # Avant Juillet 2024 = Ancien ZRR
+                st.success("✅ **ÉLIGIBLE ZRR (Ancien Régime)**")
+                afficher_details_regime("ZFRR_CLASSIC") # Conditions similaires au ZFRR classique
+
+        # 2. ANALYSE ZFU
+        DATE_FIN_ZFU = date(2025, 12, 31)
+        if str(row['NB_ZFU']) not in ['0', 'nan', 'Non', '']:
+            if date_crea <= DATE_FIN_ZFU:
+                st.warning("⚠️ **COMMUNE ZFU-TE** (Sous réserve adresse)")
+                afficher_details_regime("ZFU")
+            else:
+                st.error(f"❌ Zone ZFU : Dispositif expiré (Date limite : {DATE_FIN_ZFU.strftime('%d/%m/%Y')})")
+
+        # 3. ANALYSE AFR
+        if str(row['AFR']) in ['Intégralement', 'Partiellement', 'Oui']:
+            st.info("ℹ️ **ZONE AFR**")
+            afficher_details_regime("AFR")
+
+        # 4. ANALYSE BER
+        if 'BER' in row and str(row['BER']) == 'Oui':
+            st.success("✅ **ÉLIGIBLE BER**")
+            afficher_details_regime("BER")
+
+        # 5. CAS NÉGATIF
+        if valeur_frr not in ['FRR', 'FRR+', 'ZRR MAINTENUE', 'OUI'] and str(row['NB_ZFU']) in ['0', 'nan', 'Non', ''] and str(row['AFR']) not in ['Intégralement', 'Partiellement', 'Oui'] and str(row.get('BER', 'Non')) != 'Oui':
+             st.info("Aucun dispositif ZRR/FRR/ZFU/AFR/BER détecté pour cette commune.")
+
+else:
+    st.error("Erreur chargement Google Sheet.")
