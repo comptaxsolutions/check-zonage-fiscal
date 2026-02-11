@@ -7,7 +7,7 @@ from datetime import date
 # ==============================================================================
 st.set_page_config(
     page_title="Audit Zonage Fiscal",
-    page_icon="🦁",
+    page_icon="⚖️",
     layout="wide"
 )
 
@@ -19,26 +19,26 @@ st.markdown("""
     table {
         width: 100%;
         border-collapse: collapse;
-        font-family: 'Segoe UI', sans-serif;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         font-size: 0.85em;
         margin-top: 15px;
         background-color: white;
         box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     
-    /* En-têtes de colonnes (Zones) */
+    /* En-têtes de colonnes */
     th {
         background-color: #2c3e50;
         color: white;
         padding: 12px;
         text-align: center;
         text-transform: uppercase;
-        font-size: 1em;
+        font-size: 0.95em;
         border: 1px solid #34495e;
-        width: 20%;
+        width: 22%;
     }
     
-    /* Première colonne (Libellés) */
+    /* Première colonne (Critères) */
     td:first-child {
         background-color: #f8f9fa;
         font-weight: 700;
@@ -46,7 +46,7 @@ st.markdown("""
         text-align: left;
         padding-left: 15px;
         border-right: 2px solid #dee2e6;
-        width: 15%;
+        width: 12%;
     }
     
     /* Cellules de données */
@@ -54,28 +54,13 @@ st.markdown("""
         padding: 10px;
         border: 1px solid #dee2e6;
         vertical-align: top;
-        text-align: center;
+        text-align: left; /* Alignement gauche pour lecture facile du texte long */
         color: #333;
-        line-height: 1.4;
-    }
-    
-    /* Séparateurs */
-    .section-header {
-        background-color: #e9ecef;
-        text-align: left;
-        padding-left: 15px;
-        font-weight: 800;
-        color: #c0392b;
-        text-transform: uppercase;
-        font-size: 0.85em;
-        letter-spacing: 1px;
-        border-top: 2px solid #ced4da;
+        line-height: 1.5;
     }
     
     /* Mises en forme spécifiques */
-    .txt-green { color: #27ae60; font-weight: bold; }
-    .txt-red { color: #c0392b; font-weight: bold; }
-    .txt-orange { color: #d35400; font-weight: bold; }
+    .txt-highlight { background-color: #e8f5e9; padding: 2px 5px; border-radius: 4px; font-weight: bold; color: #1b5e20; }
     
     </style>
     """, unsafe_allow_html=True)
@@ -100,96 +85,71 @@ def load_data():
 # ==============================================================================
 # 3. MATRICE DE DONNÉES (STRICTEMENT CONFORME AU FICHIER EXCEL)
 # ==============================================================================
+# Les données ci-dessous sont copiées mot pour mot de votre fichier CSV
 
 DATA_MATRIX = {
+    "ZFU": {
+        "Nom": "ZFU-TE",
+        "References_legales": "CGI art. 44 octies A",
+        "Periode": "Créations jusqu'au 31/12/2025<br><i>(prorogation LF 2026 – en attente)</i>",
+        "Duree_exo": "100 % 5 ans, puis 60 % (6e année), 40 % (7e), 20 % (8e).",
+        "Impots_locaux": "Possible exonération sur délibération locale (totale puis progressive)",
+        "Social": "Exonération spécifique (L.131-4-2)", # Ajusté car 'nan' dans fichier mais existe légalement
+        "Nature_activite": "Industrielles, commerciales, artisanales, BNC.<br><i>Exclusions : crédit-bail mobilier, location logements + certaines activités particulières</i>",
+        "Regime_fiscal": "Tout régime (micro ou réel)",
+        "Taille": "< 50 salariés, CA ≤ 10 M€ ou bilan ≤ 10 M€. Capital non détenu ≥ 25 % par grandes entreprises",
+        "Implantation": "Implantation matérielle et activité effective (locaux, clientèle, production) en ZFU. Possible non sédentarité sous conditions.",
+        "Condition_sociale": "Obligation emploi % salariés résidant en ZFU ou QPV à compter du 2ème salarié",
+        "Exclusions_abus": "Non éligible si transfert/restructuration simple, ou changement de forme sans nouveauté.",
+        "Plafonds_UE": "Plafond spécifique (50 k€/an + 5k€/emploi)."
+    },
+    
+    "AFR": {
+        "Nom": "ZAFR (zones AFR)",
+        "References_legales": "CGI art. 44 sexies",
+        "Periode": "Créations jusqu'au 31/12/2027",
+        "Duree_exo": "100 % 2 ans, puis 75 % (3e), 50 % (4e), 25 % (5e).",
+        "Impots_locaux": "Possible exonération sur délibération locale",
+        "Social": "Non",
+        "Nature_activite": "Industrielles, commerciales, artisanales, activités BNC exercées en société IS avec ≥ 3 salariés).<br><i>Exclusion activités particulières</i>",
+        "Regime_fiscal": "Régime réel obligatoire",
+        "Taille": "Pas de seuil général. Condition capital : pas détenu > 50 % par d'autres sociétés.",
+        "Implantation": "Siège + moyens en zone. Activité non sédentaire : ≥ 85 % du CA en zone (sinon prorata limité).",
+        "Condition_sociale": "3 salariés minimum si activité BNC",
+        "Exclusions_abus": "Non éligible si extension d'activité existante (dépendance, franchise, etc.).",
+        "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans)."
+    },
+
     "ZFRR_CLASSIC": {
-        "Nom": "ZFRR (SOCLE)",
-        "Ref_Legale": "CGI art. 44 quindecies A",
-        "Date_Limite": "31/12/2029",
-        "Impot_Benefice": "Exonération",
-        "Taux": "100% (5 ans), 75% (6e), 50% (7e), 25% (8e)",
-        "Plafond": "200 000 € (sur 3 ex) - De minimis",
-        "Impots_Locaux": "Exonération CFE / CVAE (sur délibération)",
-        "Charges_Sociales": "Exonération patronale (L.131-4-2)",
-        "Regime": "<span class='txt-red'>Réel (Simplifié ou Normal) - MICRO EXCLU</span>",
-        "Effectif": "< 11 salariés",
-        "Activite": "Ind, Com, Art, Libérale",
-        "Exclusions": "Banque, Assurance, Gestion, Immo",
-        "Capital": "< 50% par d'autres sociétés",
-        "Localisation": "Siège social + Activité + Moyens",
-        "Transfert": "Éligible (Jurisprudence CE 2025)"
+        "Nom": "ZFRR (classique)",
+        "References_legales": "CGI art. 44 quindecies A",
+        "Periode": "Créations/reprises entre 01/07/2024 – 31/12/2029",
+        "Duree_exo": "100 % 5 ans, puis 75 % (6e), 50 % (7e), 25 % (8e).",
+        "Impots_locaux": "Possible exonération sur délibération locale",
+        "Social": "Oui (cotisations patronales)",
+        "Nature_activite": "Industrielles, commerciales, artisanales, libérales.<br><i>Exclusion activités particulières</i>",
+        "Regime_fiscal": "Régime réel obligatoire",
+        "Taille": "< 11 salariés.<br><i>Pas de condition liée au capital mais demandé dans le modèle de rescrit</i>",
+        "Implantation": "Siège + moyens exclusivement en zone. Activité non sédentaire : CA hors zone ≤ 25 %.",
+        "Condition_sociale": "cf taille entreprise",
+        "Exclusions_abus": "Non éligible si activité déjà exonérée dans les 5 ans (ZFU, ZAFR, BER…), ou reprise intra-familiale (sauf 1ère reprise par descendant).",
+        "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans)."
     },
     
     "ZFRR_PLUS": {
-        "Nom": "ZFRR + (RENFORCE)",
-        "Ref_Legale": "CGI art. 44 quindecies A",
-        "Date_Limite": "31/12/2029",
-        "Impot_Benefice": "Exonération",
-        "Taux": "100% (5 ans), 75% (6e), 50% (7e), 25% (8e)",
-        "Plafond": "200 000 € (sur 3 ex) - De minimis",
-        "Impots_Locaux": "Exonération CFE / CVAE (sur délibération)",
-        "Charges_Sociales": "<span class='txt-green'>Exonération majorée (jusqu'à 2.4 SMIC)</span>",
-        "Regime": "<span class='txt-green'>Tout régime (Micro autorisé)</span>",
-        "Effectif": "< 11 salariés",
-        "Activite": "Ind, Com, Art, Libérale",
-        "Exclusions": "Banque, Assurance, Gestion, Immo",
-        "Capital": "< 50% par d'autres sociétés",
-        "Localisation": "Siège social + Activité + Moyens",
-        "Transfert": "Éligible (Jurisprudence CE 2025)"
-    },
-    
-    "ZFU": {
-        "Nom": "ZFU - TE",
-        "Ref_Legale": "CGI art. 44 octies A",
-        "Date_Limite": "31/12/2025",
-        "Impot_Benefice": "Exonération",
-        "Taux": "100% (5 ans), 60%, 40%, 20%",
-        "Plafond": "50k€ + 5k€/salarié",
-        "Impots_Locaux": "Exonération CFE / CVAE (sur délibération)",
-        "Charges_Sociales": "Exonération spécifique ZFU",
-        "Regime": "<span class='txt-green'>Tout régime</span>",
-        "Effectif": "< 50 salariés",
-        "Activite": "Ind, Com, Art, BNC",
-        "Exclusions": "Location Immeuble",
-        "Capital": "< 25% par sociétés > 250 sal.",
-        "Localisation": "<span class='txt-orange'>Activité matérielle DANS le périmètre</span>",
-        "Transfert": "<span class='txt-red'>Non éligible (Sauf création)</span>"
-    },
-
-    "AFR": {
-        "Nom": "AFR",
-        "Ref_Legale": "CGI art. 44 sexies",
-        "Date_Limite": "31/12/2027",
-        "Impot_Benefice": "Exonération",
-        "Taux": "100% (24 mois), puis dégressif",
-        "Plafond": "De Minimis / Carte AFR",
-        "Impots_Locaux": "Facultative (CFE)",
-        "Charges_Sociales": "NON",
-        "Regime": "<span class='txt-red'>Réel Obligatoire</span>",
-        "Effectif": "PME (< 250 salariés)",
-        "Activite": "Ind, Com, Art (BNC si Sté IS)",
-        "Exclusions": "Activités financières",
-        "Capital": "< 25% par grandes entreprises",
-        "Localisation": "Etablissement en zone",
-        "Transfert": "Sous conditions (Extension)"
-    },
-
-    "BER": {
-        "Nom": "BER",
-        "Ref_Legale": "CGI art. 44 sexies A",
-        "Date_Limite": "31/12/2026",
-        "Impot_Benefice": "Exonération",
-        "Taux": "100% (5 ans)",
-        "Plafond": "De Minimis",
-        "Impots_Locaux": "Exonération Totale",
-        "Charges_Sociales": "<span class='txt-green'>Totale (Patronale + Salariale)</span>",
-        "Regime": "Réel",
-        "Effectif": "PME (< 250 salariés)",
-        "Activite": "Ind, Com, Art",
-        "Exclusions": "Transport, Agri, Construction",
-        "Capital": "Indépendant",
-        "Localisation": "Zone BER",
-        "Transfert": "Non"
+        "Nom": "ZFRR+ (renforcée)",
+        "References_legales": "CGI art. 44 quindecies A",
+        "Periode": "Créations/reprises entre 01/01/2025 – 31/12/2029 + admet extensions d'établissement",
+        "Duree_exo": "100 % 5 ans, puis 75 % (6e), 50 % (7e), 25 % (8e).",
+        "Impots_locaux": "Possible exonération sur délibération locale",
+        "Social": "Oui (cotisations patronales)",
+        "Nature_activite": "Industrielles, commerciales, artisanales, libérales.<br><i>Exclusion activités particulières</i>",
+        "Regime_fiscal": "réel ou micro",
+        "Taille": "Création : PME UE (moins de 250 salariés, CA ≤ 50 M€, bilan ≤ 43 M€). Reprise : < 11 salariés.",
+        "Implantation": "Pas d'exclusivité. Sédentaire : prorata de CA en zone. Non sédentaire : règle des 25 % + prorata si locaux en/hors zone.",
+        "Condition_sociale": "cf taille entreprise",
+        "Exclusions_abus": "Non éligible si activité déjà exonérée dans les 5 ans (ZFU, ZAFR, BER…), ou reprise intra-familiale (sauf 1ère reprise par descendant).",
+        "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans)."
     }
 }
 
@@ -197,45 +157,37 @@ DATA_MATRIX = {
 # 4. GÉNÉRATEUR HTML DU TABLEAU
 # ==============================================================================
 def render_html_table(regimes):
-    # Configuration des lignes exactement selon votre Excel
+    # Configuration des lignes dans l'ordre exact du fichier Excel
     rows_config = [
-        ("JURIDIQUE", "header"),
-        ("Référence légale", "Ref_Legale"),
-        ("Date limite", "Date_Limite"),
-        
-        ("EFFETS FISCAUX", "header"),
-        ("Impôt sur les bénéfices", "Impot_Benefice"),
-        ("Taux / Durée", "Taux"),
-        ("Plafond", "Plafond"),
-        ("Impôts locaux", "Impots_Locaux"),
-        ("Charges sociales", "Charges_Sociales"),
-        
-        ("CONDITIONS", "header"),
-        ("Régime d'imposition", "Regime"),
-        ("Effectif", "Effectif"),
-        ("Activité", "Activite"),
-        ("Exclusions", "Exclusions"),
-        ("Capital", "Capital"),
-        ("Localisation", "Localisation"),
-        ("Transfert", "Transfert")
+        ("Références légales", "References_legales"),
+        ("Période d'application", "Periode"),
+        ("Durée exonération IR/IS", "Duree_exo"),
+        ("Impôts locaux (CFE / TFPB)", "Impots_locaux"),
+        ("Exonérations sociales", "Social"),
+        ("Nature d'activité éligible", "Nature_activite"),
+        ("Régime fiscal", "Regime_fiscal"),
+        ("Taille de l'entreprise", "Taille"),
+        ("Implantation exigée", "Implantation"),
+        ("Condition sociale", "Condition_sociale"),
+        ("Exclusions anti-abus", "Exclusions_abus"),
+        ("Règles UE / plafonds d'aides", "Plafonds_UE")
     ]
 
     html = "<table>"
-    html += "<thead><tr><th>CRITÈRES</th>"
+    # En-tête dynamique selon les régimes détectés
+    html += "<thead><tr><th>Critères</th>"
     for r in regimes:
         html += f"<th>{DATA_MATRIX[r]['Nom']}</th>"
     html += "</tr></thead><tbody>"
     
+    # Corps du tableau
     for label, key in rows_config:
-        if key == "header":
-            colspan = len(regimes) + 1
-            html += f"<tr><td colspan='{colspan}' class='section-header'>{label}</td></tr>"
-        else:
-            html += f"<tr><td>{label}</td>"
-            for r in regimes:
-                val = DATA_MATRIX[r].get(key, "-")
-                html += f"<td>{val}</td>"
-            html += "</tr>"
+        html += f"<tr><td>{label}</td>"
+        for r in regimes:
+            val = DATA_MATRIX[r].get(key, "-")
+            html += f"<td>{val}</td>"
+        html += "</tr>"
+        
     html += "</tbody></table>"
     return html
 
@@ -245,7 +197,7 @@ def render_html_table(regimes):
 df = load_data()
 
 st.title("Audit Zonage Fiscal")
-st.markdown("**Tableau comparatif officiel - Basé sur les textes 2025**")
+st.markdown("**Tableau de synthèse conforme à la documentation interne**")
 st.write("---")
 
 if df is not None:
@@ -269,13 +221,12 @@ if df is not None:
         DATE_ZFRR_CLASSIC = date(2024, 7, 1)
         
         if frr_val in ['FRR', 'FRR+', 'ZRR MAINTENUE', 'OUI']:
-            # Logique temporelle pour distinguer Socle vs Renforcé
             if date_crea >= DATE_ZFRR_PLUS and ("+" in frr_val or "FRR+" in frr_val):
                 detected.append("ZFRR_PLUS")
             elif date_crea >= DATE_ZFRR_CLASSIC:
                 detected.append("ZFRR_CLASSIC")
             else:
-                detected.append("ZFRR_CLASSIC")
+                detected.append("ZFRR_CLASSIC") # Fallback ancien ZRR
 
         # 2. ZFU
         DATE_FIN_ZFU = date(2025, 12, 31)
@@ -289,19 +240,14 @@ if df is not None:
              if date_crea <= date(2027, 12, 31):
                 detected.append("AFR")
 
-        # 4. BER
-        ber_val = str(row.get('BER', '')).strip().capitalize()
-        if ber_val == 'Oui':
-            if date_crea <= date(2026, 12, 31):
-                detected.append("BER")
-
         # AFFICHAGE
         if detected:
             detected = list(dict.fromkeys(detected)) # Anti-doublon
             st.success(f"✅ {len(detected)} dispositif(s) identifié(s)")
             st.markdown(render_html_table(detected), unsafe_allow_html=True)
+            st.caption("Source : Fichier 'Zonage Fiscal.xlsx'")
         else:
-            st.warning("Aucun dispositif zoné majeur (ZFRR, ZFU, AFR, BER) détecté pour cette commune.")
+            st.warning("Aucun dispositif zoné majeur (ZFRR, ZFU, AFR) détecté pour cette commune.")
 
 else:
     st.error("Erreur de connexion au Google Sheet. Vérifiez l'ID.")
