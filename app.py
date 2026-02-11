@@ -67,13 +67,14 @@ st.markdown("""
         display: inline-block;
         background-color: #fce4ec; /* Fond rose clair Marianne */
         color: #c2185b;
-        padding: 5px 10px;
+        padding: 6px 12px;
         border-radius: 4px;
         text-decoration: none;
         font-weight: bold;
         border: 1px solid #f8bbd0;
         font-size: 0.9em;
         text-align: center;
+        white-space: nowrap;
     }
     .btn-legifrance:hover {
         background-color: #f8bbd0;
@@ -142,7 +143,7 @@ def load_data():
         return None
 
 # ==============================================================================
-# 3. MATRICE DE DONNÉES (AVEC LIENS LÉGIFRANCE)
+# 3. MATRICE DE DONNÉES (AVEC LIENS CORRECTS)
 # ==============================================================================
 DATA_MATRIX = {
     "ZFU": {
@@ -159,7 +160,7 @@ DATA_MATRIX = {
         "Condition_sociale": "Obligation emploi % salariés résidant en ZFU ou QPV à compter du 2ème salarié",
         "Exclusions_abus": "Non éligible si transfert/restructuration simple, ou changement de forme sans nouveauté.",
         "Plafonds_UE": "Plafond spécifique (50 k€/an + 5k€/emploi).",
-        "Legifrance_Base": None # Pas de lien
+        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/LEGIARTI000026939165/"
     },
     
     "AFR": {
@@ -227,7 +228,7 @@ DATA_MATRIX = {
         "Condition_sociale": "N/C",
         "Exclusions_abus": "N/C",
         "Plafonds_UE": "N/C",
-        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/LEGIARTI000026939165/"
+        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000048707389/"
     }
 }
 
@@ -285,6 +286,7 @@ def render_html_table(regimes, row_data, date_op):
     html += "</tr>"
     
     # LIGNE 2 : LIEN LÉGIFRANCE (DYNAMIQUE DATE)
+    # Format YYYY-MM-DD
     date_formatted = date_op.strftime("%Y-%m-%d")
     
     html += "<tr><td>VÉRIFICATION SOURCE</td>"
@@ -375,7 +377,7 @@ if df is not None:
             detected = list(dict.fromkeys(detected)) # Anti-doublon
             st.success(f"✅ {len(detected)} dispositif(s) identifié(s)")
             
-            # Affichage dynamique
+            # On passe date_crea pour le lien légifrance
             st.markdown(render_html_table(detected, row, date_crea), unsafe_allow_html=True)
             
             if "ZFU" in detected or "QPV" in detected:
