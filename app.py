@@ -56,7 +56,7 @@ def load_data():
     # 👇👇👇 TON ID GOOGLE SHEET ICI 👇👇👇
     sheet_id = "TON_ID_GOOGLE_SHEET_ICI" 
     
-    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
+    url = f"https://docs.google.com/spreadsheets/d/1XwJM0unxho3qPpxRohA_w8Ou9-gP8bHqguPQeD0aI2I/export?format=csv"
     try:
         df = pd.read_csv(url, dtype=str)
         # Création de la colonne recherche
@@ -207,4 +207,5 @@ if df is not None:
              st.info("Aucun dispositif ZRR/FRR/ZFU/AFR/BER détecté pour cette commune.")
 
 else:
+
     st.error("Erreur chargement Google Sheet. Vérifiez l'ID.")
