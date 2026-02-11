@@ -15,30 +15,25 @@ st.markdown("""
     <style>
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
     
-    /* STYLE DU TABLEAU EXPERT */
+    /* TABLEAU STYLISÉ */
     table {
         width: 100%;
         border-collapse: collapse;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: 'Segoe UI', sans-serif;
         font-size: 0.85em;
         margin-top: 15px;
         background-color: white;
         box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
-    
-    /* En-têtes de colonnes */
     th {
         background-color: #2c3e50;
         color: white;
         padding: 12px;
         text-align: center;
         text-transform: uppercase;
-        font-size: 0.95em;
         border: 1px solid #34495e;
-        min-width: 150px;
+        width: 18%; /* Ajusté */
     }
-    
-    /* Première colonne (Critères) */
     td:first-child {
         background-color: #f8f9fa;
         font-weight: 700;
@@ -46,53 +41,79 @@ st.markdown("""
         text-align: left;
         padding-left: 15px;
         border-right: 2px solid #dee2e6;
-        width: 200px;
+        width: 15%;
     }
-    
-    /* Cellules de données */
     td {
         padding: 10px;
         border: 1px solid #dee2e6;
         vertical-align: top;
         text-align: left;
         color: #333;
-        line-height: 1.5;
+        line-height: 1.4;
     }
-    
     </style>
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. CHARGEMENT DES DONNÉES
+# 2. CHARGEMENT INTELLIGENT DES DONNÉES
 # ==============================================================================
 @st.cache_data(ttl=600)
 def load_data():
     sheet_id = "1XwJM0unxho3qPpxRohA_w8Ou9-gP8bHqguPQeD0aI2I"
     url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
+    
     try:
-        df = pd.read_csv(url, dtype=str)
-        # Création de la colonne recherche intelligente
-        if 'CP' in df.columns:
-            df['Label_Recherche'] = df['COMMUNE'] + " (" + df['CP'] + ")"
+        # Lecture intelligente (comme vu précédemment)
+        df_raw = pd.read_csv(url, header=None, dtype=str)
+        header_row_idx = None
+        for i, row in df_raw.iterrows():
+            row_str = " ".join(row.fillna("").astype(str).values)
+            if "Libellé" in row_str and "Code" in row_str:
+                header_row_idx = i
+                break
+        
+        if header_row_idx is None:
+            df = pd.read_csv(url, dtype=str)
         else:
-            df['Label_Recherche'] = df['COMMUNE'] + " (Insee: " + df['CODE'] + ")"
-        return df
+            df = pd.read_csv(url, header=header_row_idx, dtype=str)
+
+        rename_map = {}
+        for col in df.columns:
+            c = col.lower()
+            if "libellé" in c or "commune" in c: rename_map[col] = "COMMUNE"
+            elif "code" in c and "insee" not in c: rename_map[col] = "CODE"
+            elif "zfu" in c: rename_map[col] = "NB_ZFU"
+            elif "quartier" in c or "qpv" in c: rename_map[col] = "NB_QPV"
+            elif "frr" in c or "ruralités" in c: rename_map[col] = "FRR"
+            elif "afr" in c: rename_map[col] = "AFR"
+            elif "ber" in c: rename_map[col] = "BER"
+            # On ignore ZORCOMIR volontairement
+
+        df = df.rename(columns=rename_map)
+        
+        if 'COMMUNE' in df.columns and 'CODE' in df.columns:
+            if 'CP' in df.columns:
+                df['Label_Recherche'] = df['COMMUNE'] + " (" + df['CP'] + ")"
+            else:
+                df['Label_Recherche'] = df['COMMUNE'] + " (" + df['CODE'] + ")"
+            return df
+        else:
+            return None
+
     except Exception as e:
         return None
 
 # ==============================================================================
-# 3. MATRICE DE DONNÉES
+# 3. MATRICE DE DONNÉES (COPIE EXACTE EXCEL UTILISATEUR)
 # ==============================================================================
-
 DATA_MATRIX = {
-    # --- 1. DONNÉES STRICTES DU FICHIER EXCEL UTILISATEUR ---
     "ZFU": {
         "Nom": "ZFU-TE",
         "References_legales": "CGI art. 44 octies A",
         "Periode": "Créations jusqu'au 31/12/2025<br><i>(prorogation LF 2026 – en attente)</i>",
         "Duree_exo": "100 % 5 ans, puis 60 % (6e année), 40 % (7e), 20 % (8e).",
         "Impots_locaux": "Possible exonération sur délibération locale (totale puis progressive)",
-        "Social": "Exonération spécifique (L.131-4-2)",
+        "Social": "Exonération spécifique (L.131-4-2)", # Pas nan mais implicite
         "Nature_activite": "Industrielles, commerciales, artisanales, BNC.<br><i>Exclusions : crédit-bail mobilier, location logements + certaines activités particulières</i>",
         "Regime_fiscal": "Tout régime (micro ou réel)",
         "Taille": "< 50 salariés, CA ≤ 10 M€ ou bilan ≤ 10 M€. Capital non détenu ≥ 25 % par grandes entreprises",
@@ -103,12 +124,12 @@ DATA_MATRIX = {
     },
     
     "AFR": {
-        "Nom": "ZAFR (Zones AFR)",
+        "Nom": "ZAFR (zones AFR)",
         "References_legales": "CGI art. 44 sexies",
         "Periode": "Créations jusqu'au 31/12/2027",
         "Duree_exo": "100 % 2 ans, puis 75 % (3e), 50 % (4e), 25 % (5e).",
         "Impots_locaux": "Possible exonération sur délibération locale",
-        "Social": "Non",
+        "Social": "Non", # nan dans fichier
         "Nature_activite": "Industrielles, commerciales, artisanales, activités BNC exercées en société IS avec ≥ 3 salariés).<br><i>Exclusion activités particulières</i>",
         "Regime_fiscal": "Régime réel obligatoire",
         "Taille": "Pas de seuil général. Condition capital : pas détenu > 50 % par d'autres sociétés.",
@@ -119,7 +140,7 @@ DATA_MATRIX = {
     },
 
     "ZFRR_CLASSIC": {
-        "Nom": "ZFRR (Classique)",
+        "Nom": "ZFRR (classique)",
         "References_legales": "CGI art. 44 quindecies A",
         "Periode": "Créations/reprises entre 01/07/2024 – 31/12/2029",
         "Duree_exo": "100 % 5 ans, puis 75 % (6e), 50 % (7e), 25 % (8e).",
@@ -135,7 +156,7 @@ DATA_MATRIX = {
     },
     
     "ZFRR_PLUS": {
-        "Nom": "ZFRR+ (Renforcée)",
+        "Nom": "ZFRR+ (renforcée)",
         "References_legales": "CGI art. 44 quindecies A",
         "Periode": "Créations/reprises entre 01/01/2025 – 31/12/2029 + admet extensions d'établissement",
         "Duree_exo": "100 % 5 ans, puis 75 % (6e), 50 % (7e), 25 % (8e).",
@@ -150,37 +171,20 @@ DATA_MATRIX = {
         "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans)."
     },
 
-    # --- 2. AJOUTS STANDARDS (Basés sur CGI - Données absentes du fichier Excel) ---
-    "ZORCOMIR": {
-        "Nom": "ZoRCoMiR",
-        "References_legales": "CGI art. 1464 G / 1466 A",
-        "Periode": "Jusqu'au 31/12/2026",
-        "Duree_exo": "Exonération CFE/TFPB (Pas d'exo IS/IR). Durée selon délibération (max 5 ans).",
-        "Impots_locaux": "Exonération CFE et TFPB (100%) sur délibération.",
-        "Social": "Non",
-        "Nature_activite": "Activités commerciales uniquement.",
-        "Regime_fiscal": "Tout régime",
-        "Taille": "PME (< 250 sal, CA < 50 M€).",
-        "Implantation": "Commune classée ZoRCoMiR",
-        "Condition_sociale": "Non",
-        "Exclusions_abus": "Non cumulable avec ZRR/ZFU sur les mêmes impôts.",
-        "Plafonds_UE": "De minimis (300 k€)."
-    },
-
     "QPV": {
-        "Nom": "QPV (Hors ZFU)",
-        "References_legales": "CGI art. 1466 A",
-        "Periode": "Période selon contrat de ville",
-        "Duree_exo": "Exonération CFE/TFPB (Pas d'exo IS/IR sauf si ZFU). Max 5 ans.",
-        "Impots_locaux": "Exonération CFE (totale ou partielle) sur délibération.",
-        "Social": "Non (Sauf primes embauche éventuelles)",
-        "Nature_activite": "Commerciales (TPE).",
-        "Regime_fiscal": "Tout régime",
-        "Taille": "< 11 salariés ou < 50 selon délibération, CA < 2M€ ou 10M€.",
-        "Implantation": "Établissement situé dans un QPV.",
-        "Condition_sociale": "Non",
-        "Exclusions_abus": "Non cumulable.",
-        "Plafonds_UE": "De minimis."
+        "Nom": "QPPV",
+        "References_legales": "Décret n° 2023-1314 du 28 décembre 2023",
+        "Periode": "Créations jusqu'au 31/12/2025<br><i>(prorogation LF 2026 – en attente)</i>",
+        "Duree_exo": "N/C", # Comme dans le fichier
+        "Impots_locaux": "exonération TFPB 5 ans sauf délibération contraire collectivité",
+        "Social": "nan",
+        "Nature_activite": "N/C",
+        "Regime_fiscal": "N/C",
+        "Taille": "N/C",
+        "Implantation": "N/C",
+        "Condition_sociale": "N/C",
+        "Exclusions_abus": "N/C",
+        "Plafonds_UE": "N/C"
     }
 }
 
@@ -213,6 +217,9 @@ def render_html_table(regimes):
         html += f"<tr><td>{label}</td>"
         for r in regimes:
             val = DATA_MATRIX[r].get(key, "-")
+            # Gestion des cellules vides ou "nan"
+            if val == "nan" or pd.isna(val):
+                val = ""
             html += f"<td>{val}</td>"
         html += "</tr>"
         
@@ -226,7 +233,6 @@ df = load_data()
 
 st.title("Audit Zonage Fiscal")
 st.markdown("**Tableau de synthèse multi-zonages**")
-st.caption("Données ZFU/AFR/ZFRR conformes à votre fichier Excel. Données QPV/ZoRCoMiR issues du CGI.")
 st.write("---")
 
 if df is not None:
@@ -244,7 +250,7 @@ if df is not None:
         
         detected = []
         
-        # 1. ZFRR (Socle vs Renforcé)
+        # 1. ZFRR
         frr_val = str(row.get('FRR', '')).strip().upper()
         DATE_ZFRR_PLUS = date(2025, 1, 1)
         DATE_ZFRR_CLASSIC = date(2024, 7, 1)
@@ -258,9 +264,15 @@ if df is not None:
                 detected.append("ZFRR_CLASSIC")
 
         # 2. ZFU
-        DATE_FIN_ZFU = date(2025, 12, 31)
-        nb_zfu = str(row.get('NB_ZFU', '')).strip()
-        if nb_zfu not in ['0', 'nan', 'NON', ''] and date_crea <= DATE_FIN_ZFU:
+        nb_zfu = str(row.get('NB_ZFU', '0')).strip()
+        is_zfu = False
+        if nb_zfu not in ['0', 'nan', 'NON', '', 'Non']:
+            try:
+                if float(nb_zfu) > 0: is_zfu = True
+            except:
+                is_zfu = True
+
+        if is_zfu and date_crea <= date(2025, 12, 31):
             detected.append("ZFU")
 
         # 3. AFR
@@ -268,16 +280,17 @@ if df is not None:
         if afr_val in ['Integralement', 'Partiellement', 'Oui', 'Intégralement']:
              if date_crea <= date(2027, 12, 31):
                 detected.append("AFR")
-
-        # 4. ZORCOMIR
-        zorcomir_val = str(row.get('ZORCOMIR', '')).strip().capitalize()
-        if zorcomir_val in ['Classée', 'Oui', 'C']:
-             if date_crea <= date(2026, 12, 31):
-                detected.append("ZORCOMIR")
-
-        # 5. QPV
+        
+        # 4. QPV
         nb_qpv = str(row.get('NB_QPV', '0')).strip()
-        if nb_qpv not in ['0', 'nan', 'NON', '']:
+        is_qpv = False
+        if nb_qpv not in ['0', 'nan', 'NON', '', 'Non']:
+            try:
+                if float(nb_qpv) > 0: is_qpv = True
+            except:
+                is_qpv = True
+        
+        if is_qpv:
             detected.append("QPV")
 
         # AFFICHAGE
@@ -286,12 +299,10 @@ if df is not None:
             st.success(f"✅ {len(detected)} dispositif(s) identifié(s)")
             st.markdown(render_html_table(detected), unsafe_allow_html=True)
             
-            # Alerte si QPV ou ZFU détectés (Géographie précise)
             if "ZFU" in detected or "QPV" in detected:
-                
-                st.warning("⚠️ **Attention :** Pour les ZFU et QPV, l'éligibilité dépend de l'adresse exacte (à la parcelle/rue). Vérifiez sur sig.ville.gouv.fr.")
+                 st.warning("⚠️ **Attention (ZFU / QPV)** : L'éligibilité dépend de l'adresse exacte (à la rue/parcelle). Vérifiez sur sig.ville.gouv.fr.")
         else:
-            st.warning("Aucun dispositif zoné majeur (ZFRR, ZFU, AFR, ZORCOMIR) détecté pour cette commune.")
+            st.warning("Aucun dispositif zoné majeur détecté.")
 
 else:
-    st.error("Erreur de connexion au Google Sheet. Vérifiez l'ID.")
+    st.error("Erreur de chargement. Vérifiez que votre fichier Google Sheet est bien partagé et que l'ID est correct.")
