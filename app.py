@@ -52,19 +52,20 @@ st.markdown("""
         line-height: 1.4;
     }
     
-    /* Style spécifique pour la ligne ZONE */
+    /* Style ligne ZONE */
     .zone-row td {
         background-color: #e8f5e9;
         font-weight: bold;
         color: #1b5e20;
         text-align: center;
         font-size: 1.1em;
+        border-bottom: 2px solid #2e7d32;
     }
     </style>
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. CHARGEMENT INTELLIGENT DES DONNÉES
+# 2. CHARGEMENT INTELLIGENT DES DONNÉES (CORRECTIF AMIENS)
 # ==============================================================================
 @st.cache_data(ttl=600)
 def load_data():
@@ -72,11 +73,12 @@ def load_data():
     url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
     
     try:
-        # Lecture intelligente pour trouver l'en-tête
+        # 1. Détection de la ligne d'en-tête
         df_raw = pd.read_csv(url, header=None, dtype=str)
         header_row_idx = None
         for i, row in df_raw.iterrows():
             row_str = " ".join(row.fillna("").astype(str).values)
+            # On cherche la ligne qui contient les mots clés
             if "Libellé" in row_str and "Code" in row_str:
                 header_row_idx = i
                 break
@@ -86,20 +88,50 @@ def load_data():
         else:
             df = pd.read_csv(url, header=header_row_idx, dtype=str)
 
-        # Renommage des colonnes
+        # 2. NETTOYAGE DES NOMS DE COLONNES (Suppression des espaces invisibles)
+        df.columns = [c.strip() for c in df.columns]
+
+        # 3. RENOMMAGE SÉCURISÉ
+        # On ne renomme QUE si la colonne cible n'existe pas déjà
         rename_map = {}
-        for col in df.columns:
+        existing_cols = df.columns.tolist()
+
+        # Fonction pour vérifier si une colonne existe déjà proprement
+        def has_col(target):
+            return target in existing_cols
+
+        for col in existing_cols:
             c = col.lower()
-            if "libellé" in c or "commune" in c: rename_map[col] = "COMMUNE"
-            elif "code" in c and "insee" not in c: rename_map[col] = "CODE"
-            elif "zfu" in c: rename_map[col] = "NB_ZFU"
-            elif "quartier" in c or "qpv" in c: rename_map[col] = "NB_QPV"
-            elif "frr" in c or "ruralités" in c: rename_map[col] = "FRR"
-            elif "afr" in c: rename_map[col] = "AFR"
-            elif "ber" in c: rename_map[col] = "BER"
+            
+            # COMMUNE
+            if ("libellé" in c or "commune" in c) and not has_col("COMMUNE"):
+                rename_map[col] = "COMMUNE"
+            # CODE
+            elif ("code" in c and "insee" not in c) and not has_col("CODE"):
+                rename_map[col] = "CODE"
+            # ZFU (Priorité à NB_ZFU exact, sinon recherche floue)
+            elif "nb_zfu" in c: 
+                rename_map[col] = "NB_ZFU" # Cas idéal
+            elif "zfu" in c and not has_col("NB_ZFU") and "NB_ZFU" not in rename_map.values():
+                rename_map[col] = "NB_ZFU"
+            # QPV
+            elif "nb_qpv" in c:
+                rename_map[col] = "NB_QPV"
+            elif ("quartier" in c or "qpv" in c or "qppv" in c) and not has_col("NB_QPV") and "NB_QPV" not in rename_map.values():
+                rename_map[col] = "NB_QPV"
+            # FRR
+            elif ("frr" in c or "ruralités" in c) and not has_col("FRR"):
+                rename_map[col] = "FRR"
+            # AFR
+            elif "afr" in c and not has_col("AFR"):
+                rename_map[col] = "AFR"
+            # BER
+            elif "ber" in c and not has_col("BER"):
+                rename_map[col] = "BER"
 
         df = df.rename(columns=rename_map)
         
+        # 4. Construction colonne Recherche
         if 'COMMUNE' in df.columns and 'CODE' in df.columns:
             if 'CP' in df.columns:
                 df['Label_Recherche'] = df['COMMUNE'] + " (" + df['CP'] + ")"
@@ -113,7 +145,7 @@ def load_data():
         return None
 
 # ==============================================================================
-# 3. MATRICE DE DONNÉES (STATIQUE)
+# 3. MATRICE DE DONNÉES (QPPV MIS À JOUR)
 # ==============================================================================
 DATA_MATRIX = {
     "ZFU": {
@@ -122,7 +154,7 @@ DATA_MATRIX = {
         "Periode": "Créations jusqu'au 31/12/2025<br><i>(prorogation LF 2026 – en attente)</i>",
         "Duree_exo": "100 % 5 ans, puis 60 % (6e année), 40 % (7e), 20 % (8e).",
         "Impots_locaux": "Possible exonération sur délibération locale (totale puis progressive)",
-        "Social": "Exonération spécifique (L.131-4-2)",
+        "Social": "Exonération spécifique (L.131-4-2)", 
         "Nature_activite": "Industrielles, commerciales, artisanales, BNC.<br><i>Exclusions : crédit-bail mobilier, location logements + certaines activités particulières</i>",
         "Regime_fiscal": "Tout régime (micro ou réel)",
         "Taille": "< 50 salariés, CA ≤ 10 M€ ou bilan ≤ 10 M€. Capital non détenu ≥ 25 % par grandes entreprises",
@@ -201,10 +233,8 @@ DATA_MATRIX = {
 # 4. GÉNÉRATEUR HTML DU TABLEAU (DYNAMIQUE)
 # ==============================================================================
 def get_zone_display(regime_key, row_data):
-    """Fonction pour formater l'affichage de la ligne ZONE selon les règles utilisateur"""
+    """Génère la valeur de la ligne ZONE / CLASSEMENT"""
     raw_val = ""
-    
-    # 1. Extraction de la valeur brute selon le régime
     if regime_key == "ZFU":
         raw_val = str(row_data.get('NB_ZFU', '')).strip()
     elif regime_key == "QPV":
@@ -213,22 +243,23 @@ def get_zone_display(regime_key, row_data):
         raw_val = str(row_data.get('AFR', '')).strip()
     elif "ZFRR" in regime_key:
         raw_val = str(row_data.get('FRR', '')).strip()
-        
-    # 2. Application des règles de formatage
-    if raw_val in ["Oui", "OUI", "oui"]:
-        return "Intégralement"
-    elif "Partiel" in raw_val:
-        return "Partiellement"
-    elif "maintenue" in raw_val:
-        return "ZRR maintenue"
-    elif raw_val in ["Non", "NON", "0", "nan", ""]:
+
+    # Nettoyage des valeurs "nan" ou "0" venant du CSV
+    if raw_val.lower() in ['nan', '0', '', 'non']:
         return "-"
+    
+    # Règles d'affichage
+    if raw_val.lower() == "oui":
+        return "Intégralement"
+    elif "partiel" in raw_val.lower():
+        return "Partiellement"
+    elif "maintenue" in raw_val.lower():
+        return "ZRR maintenue"
     else:
-        # C'est probablement un chiffre (ex: "7") -> on l'affiche tel quel
+        # C'est un chiffre ou un autre texte (ex: "1" ou "7")
         return raw_val
 
 def render_html_table(regimes, row_data):
-    # Configuration des lignes statiques
     rows_config = [
         ("Références légales", "References_legales"),
         ("Période d'application", "Periode"),
@@ -252,11 +283,10 @@ def render_html_table(regimes, row_data):
         html += f"<th>{DATA_MATRIX[r]['Nom']}</th>"
     html += "</tr></thead><tbody>"
     
-    # --- NOUVELLE LIGNE : ZONE (DYNAMIQUE) ---
+    # LIGNE ZONE (DYNAMIQUE)
     html += "<tr class='zone-row'><td>ZONE / CLASSEMENT</td>"
     for r in regimes:
-        display_val = get_zone_display(r, row_data)
-        html += f"<td>{display_val}</td>"
+        html += f"<td>{get_zone_display(r, row_data)}</td>"
     html += "</tr>"
     
     # LIGNES STATIQUES
@@ -308,14 +338,12 @@ if df is not None:
             else:
                 detected.append("ZFRR_CLASSIC")
 
-        # 2. ZFU
+        # 2. ZFU (Detection sur valeur brute)
         nb_zfu = str(row.get('NB_ZFU', '0')).strip()
         is_zfu = False
+        # On considère éligible si valeur != 0/Non/Vide
         if nb_zfu not in ['0', 'nan', 'NON', '', 'Non']:
-            try:
-                if float(nb_zfu) > 0: is_zfu = True
-            except:
-                is_zfu = True # Texte "Oui"
+             is_zfu = True
 
         if is_zfu and date_crea <= date(2025, 12, 31):
             detected.append("ZFU")
@@ -326,14 +354,11 @@ if df is not None:
              if date_crea <= date(2027, 12, 31):
                 detected.append("AFR")
         
-        # 4. QPV
+        # 4. QPV (Detection sur valeur brute)
         nb_qpv = str(row.get('NB_QPV', '0')).strip()
         is_qpv = False
         if nb_qpv not in ['0', 'nan', 'NON', '', 'Non']:
-            try:
-                if float(nb_qpv) > 0: is_qpv = True
-            except:
-                is_qpv = True
+             is_qpv = True
         
         if is_qpv:
             detected.append("QPV")
@@ -343,14 +368,17 @@ if df is not None:
             detected = list(dict.fromkeys(detected)) # Anti-doublon
             st.success(f"✅ {len(detected)} dispositif(s) identifié(s)")
             
-            # On passe 'row' à la fonction pour afficher les données dynamiques (7 QPV, Intégralement...)
+            # Affichage du tableau
             st.markdown(render_html_table(detected, row), unsafe_allow_html=True)
             
             if "ZFU" in detected or "QPV" in detected:
-                 st.warning("⚠️ **Attention (ZFU / QPV)** : L'éligibilité dépend de l'adresse exacte (à la rue/parcelle). Vérifiez sur sig.ville.gouv.fr.")
-                 st.caption("")
+                st.warning("⚠️ **Attention (ZFU / QPV)** : L'éligibilité dépend de l'adresse exacte. ")
         else:
             st.warning("Aucun dispositif zoné majeur détecté.")
+            
+            # Debug au cas où
+            with st.expander("Voir données brutes (Debug)"):
+                st.write(row)
 
 else:
-    st.error("Erreur de chargement.")
+    st.error("Erreur de chargement. Le fichier Google Sheet n'est pas accessible.")
