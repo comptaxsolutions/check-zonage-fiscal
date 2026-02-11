@@ -61,11 +61,29 @@ st.markdown("""
         font-size: 1.1em;
         border-bottom: 2px solid #2e7d32;
     }
+
+    /* Style Bouton Légifrance */
+    .btn-legifrance {
+        display: inline-block;
+        background-color: #fce4ec; /* Fond rose clair Marianne */
+        color: #c2185b;
+        padding: 5px 10px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: bold;
+        border: 1px solid #f8bbd0;
+        font-size: 0.9em;
+        text-align: center;
+    }
+    .btn-legifrance:hover {
+        background-color: #f8bbd0;
+        color: #880e4f;
+    }
     </style>
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. CHARGEMENT INTELLIGENT DES DONNÉES (CORRECTIF AMIENS)
+# 2. CHARGEMENT INTELLIGENT DES DONNÉES
 # ==============================================================================
 @st.cache_data(ttl=600)
 def load_data():
@@ -78,7 +96,6 @@ def load_data():
         header_row_idx = None
         for i, row in df_raw.iterrows():
             row_str = " ".join(row.fillna("").astype(str).values)
-            # On cherche la ligne qui contient les mots clés
             if "Libellé" in row_str and "Code" in row_str:
                 header_row_idx = i
                 break
@@ -88,46 +105,26 @@ def load_data():
         else:
             df = pd.read_csv(url, header=header_row_idx, dtype=str)
 
-        # 2. NETTOYAGE DES NOMS DE COLONNES (Suppression des espaces invisibles)
+        # 2. NETTOYAGE
         df.columns = [c.strip() for c in df.columns]
 
         # 3. RENOMMAGE SÉCURISÉ
-        # On ne renomme QUE si la colonne cible n'existe pas déjà
         rename_map = {}
         existing_cols = df.columns.tolist()
 
-        # Fonction pour vérifier si une colonne existe déjà proprement
-        def has_col(target):
-            return target in existing_cols
+        def has_col(target): return target in existing_cols
 
         for col in existing_cols:
             c = col.lower()
-            
-            # COMMUNE
-            if ("libellé" in c or "commune" in c) and not has_col("COMMUNE"):
-                rename_map[col] = "COMMUNE"
-            # CODE
-            elif ("code" in c and "insee" not in c) and not has_col("CODE"):
-                rename_map[col] = "CODE"
-            # ZFU (Priorité à NB_ZFU exact, sinon recherche floue)
-            elif "nb_zfu" in c: 
-                rename_map[col] = "NB_ZFU" # Cas idéal
-            elif "zfu" in c and not has_col("NB_ZFU") and "NB_ZFU" not in rename_map.values():
-                rename_map[col] = "NB_ZFU"
-            # QPV
-            elif "nb_qpv" in c:
-                rename_map[col] = "NB_QPV"
-            elif ("quartier" in c or "qpv" in c or "qppv" in c) and not has_col("NB_QPV") and "NB_QPV" not in rename_map.values():
-                rename_map[col] = "NB_QPV"
-            # FRR
-            elif ("frr" in c or "ruralités" in c) and not has_col("FRR"):
-                rename_map[col] = "FRR"
-            # AFR
-            elif "afr" in c and not has_col("AFR"):
-                rename_map[col] = "AFR"
-            # BER
-            elif "ber" in c and not has_col("BER"):
-                rename_map[col] = "BER"
+            if ("libellé" in c or "commune" in c) and not has_col("COMMUNE"): rename_map[col] = "COMMUNE"
+            elif ("code" in c and "insee" not in c) and not has_col("CODE"): rename_map[col] = "CODE"
+            elif "nb_zfu" in c: rename_map[col] = "NB_ZFU"
+            elif "zfu" in c and not has_col("NB_ZFU") and "NB_ZFU" not in rename_map.values(): rename_map[col] = "NB_ZFU"
+            elif "nb_qpv" in c: rename_map[col] = "NB_QPV"
+            elif ("quartier" in c or "qpv" in c or "qppv" in c) and not has_col("NB_QPV") and "NB_QPV" not in rename_map.values(): rename_map[col] = "NB_QPV"
+            elif ("frr" in c or "ruralités" in c) and not has_col("FRR"): rename_map[col] = "FRR"
+            elif "afr" in c and not has_col("AFR"): rename_map[col] = "AFR"
+            elif "ber" in c and not has_col("BER"): rename_map[col] = "BER"
 
         df = df.rename(columns=rename_map)
         
@@ -145,7 +142,7 @@ def load_data():
         return None
 
 # ==============================================================================
-# 3. MATRICE DE DONNÉES (QPPV MIS À JOUR)
+# 3. MATRICE DE DONNÉES (AVEC LIENS LÉGIFRANCE)
 # ==============================================================================
 DATA_MATRIX = {
     "ZFU": {
@@ -161,7 +158,8 @@ DATA_MATRIX = {
         "Implantation": "Implantation matérielle et activité effective (locaux, clientèle, production) en ZFU. Possible non sédentarité sous conditions.",
         "Condition_sociale": "Obligation emploi % salariés résidant en ZFU ou QPV à compter du 2ème salarié",
         "Exclusions_abus": "Non éligible si transfert/restructuration simple, ou changement de forme sans nouveauté.",
-        "Plafonds_UE": "Plafond spécifique (50 k€/an + 5k€/emploi)."
+        "Plafonds_UE": "Plafond spécifique (50 k€/an + 5k€/emploi).",
+        "Legifrance_Base": None # Pas de lien
     },
     
     "AFR": {
@@ -177,7 +175,8 @@ DATA_MATRIX = {
         "Implantation": "Siège + moyens en zone. Activité non sédentaire : ≥ 85 % du CA en zone (sinon prorata limité).",
         "Condition_sociale": "3 salariés minimum si activité BNC",
         "Exclusions_abus": "Non éligible si extension d'activité existante (dépendance, franchise, etc.).",
-        "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans)."
+        "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans).",
+        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000046003627/"
     },
 
     "ZFRR_CLASSIC": {
@@ -193,7 +192,8 @@ DATA_MATRIX = {
         "Implantation": "Siège + moyens exclusivement en zone. Activité non sédentaire : CA hors zone ≤ 25 %.",
         "Condition_sociale": "cf taille entreprise",
         "Exclusions_abus": "Non éligible si activité déjà exonérée dans les 5 ans (ZFU, ZAFR, BER…), ou reprise intra-familiale (sauf 1ère reprise par descendant).",
-        "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans)."
+        "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans).",
+        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000049746820/"
     },
     
     "ZFRR_PLUS": {
@@ -209,7 +209,8 @@ DATA_MATRIX = {
         "Implantation": "Pas d'exclusivité. Sédentaire : prorata de CA en zone. Non sédentaire : règle des 25 % + prorata si locaux en/hors zone.",
         "Condition_sociale": "cf taille entreprise",
         "Exclusions_abus": "Non éligible si activité déjà exonérée dans les 5 ans (ZFU, ZAFR, BER…), ou reprise intra-familiale (sauf 1ère reprise par descendant).",
-        "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans)."
+        "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans).",
+        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000051871914/"
     },
 
     "QPV": {
@@ -225,7 +226,8 @@ DATA_MATRIX = {
         "Implantation": "N/C",
         "Condition_sociale": "N/C",
         "Exclusions_abus": "N/C",
-        "Plafonds_UE": "N/C"
+        "Plafonds_UE": "N/C",
+        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/LEGIARTI000026939165/"
     }
 }
 
@@ -244,22 +246,15 @@ def get_zone_display(regime_key, row_data):
     elif "ZFRR" in regime_key:
         raw_val = str(row_data.get('FRR', '')).strip()
 
-    # Nettoyage des valeurs "nan" ou "0" venant du CSV
     if raw_val.lower() in ['nan', '0', '', 'non']:
         return "-"
     
-    # Règles d'affichage
-    if raw_val.lower() == "oui":
-        return "Intégralement"
-    elif "partiel" in raw_val.lower():
-        return "Partiellement"
-    elif "maintenue" in raw_val.lower():
-        return "ZRR maintenue"
-    else:
-        # C'est un chiffre ou un autre texte (ex: "1" ou "7")
-        return raw_val
+    if raw_val.lower() == "oui": return "Intégralement"
+    elif "partiel" in raw_val.lower(): return "Partiellement"
+    elif "maintenue" in raw_val.lower(): return "ZRR maintenue"
+    else: return raw_val
 
-def render_html_table(regimes, row_data):
+def render_html_table(regimes, row_data, date_op):
     rows_config = [
         ("Références légales", "References_legales"),
         ("Période d'application", "Periode"),
@@ -283,12 +278,25 @@ def render_html_table(regimes, row_data):
         html += f"<th>{DATA_MATRIX[r]['Nom']}</th>"
     html += "</tr></thead><tbody>"
     
-    # LIGNE ZONE (DYNAMIQUE)
+    # LIGNE 1 : ZONE (DYNAMIQUE)
     html += "<tr class='zone-row'><td>ZONE / CLASSEMENT</td>"
     for r in regimes:
         html += f"<td>{get_zone_display(r, row_data)}</td>"
     html += "</tr>"
     
+    # LIGNE 2 : LIEN LÉGIFRANCE (DYNAMIQUE DATE)
+    date_formatted = date_op.strftime("%Y-%m-%d")
+    
+    html += "<tr><td>VÉRIFICATION SOURCE</td>"
+    for r in regimes:
+        base_url = DATA_MATRIX[r].get("Legifrance_Base")
+        if base_url:
+            full_link = f"{base_url}{date_formatted}"
+            html += f'<td><a href="{full_link}" target="_blank" class="btn-legifrance">Voir le texte à date 🔗</a></td>'
+        else:
+            html += "<td>-</td>"
+    html += "</tr>"
+
     # LIGNES STATIQUES
     for label, key in rows_config:
         html += f"<tr><td>{label}</td>"
@@ -338,10 +346,9 @@ if df is not None:
             else:
                 detected.append("ZFRR_CLASSIC")
 
-        # 2. ZFU (Detection sur valeur brute)
+        # 2. ZFU
         nb_zfu = str(row.get('NB_ZFU', '0')).strip()
         is_zfu = False
-        # On considère éligible si valeur != 0/Non/Vide
         if nb_zfu not in ['0', 'nan', 'NON', '', 'Non']:
              is_zfu = True
 
@@ -354,11 +361,11 @@ if df is not None:
              if date_crea <= date(2027, 12, 31):
                 detected.append("AFR")
         
-        # 4. QPV (Detection sur valeur brute)
+        # 4. QPV
         nb_qpv = str(row.get('NB_QPV', '0')).strip()
         is_qpv = False
         if nb_qpv not in ['0', 'nan', 'NON', '', 'Non']:
-             is_qpv = True
+            is_qpv = True
         
         if is_qpv:
             detected.append("QPV")
@@ -368,17 +375,13 @@ if df is not None:
             detected = list(dict.fromkeys(detected)) # Anti-doublon
             st.success(f"✅ {len(detected)} dispositif(s) identifié(s)")
             
-            # Affichage du tableau
-            st.markdown(render_html_table(detected, row), unsafe_allow_html=True)
+            # Affichage dynamique
+            st.markdown(render_html_table(detected, row, date_crea), unsafe_allow_html=True)
             
             if "ZFU" in detected or "QPV" in detected:
                 st.warning("⚠️ **Attention (ZFU / QPV)** : L'éligibilité dépend de l'adresse exacte. ")
         else:
             st.warning("Aucun dispositif zoné majeur détecté.")
-            
-            # Debug au cas où
-            with st.expander("Voir données brutes (Debug)"):
-                st.write(row)
 
 else:
     st.error("Erreur de chargement. Le fichier Google Sheet n'est pas accessible.")
