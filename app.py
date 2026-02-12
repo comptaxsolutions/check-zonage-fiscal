@@ -7,7 +7,7 @@ from datetime import date
 # ==============================================================================
 st.set_page_config(
     page_title="Vérification zonage fiscal",
-    page_icon="🦁",
+    page_icon="⚖️",
     layout="wide"
 )
 
@@ -489,4 +489,5 @@ if df is not None:
 
 else:
     st.error("Erreur chargement Google Sheet.")
+
 
