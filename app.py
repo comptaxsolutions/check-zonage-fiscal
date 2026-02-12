@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import date
 
 # ==============================================================================
-# 1. CONFIGURATION & DESIGN
+# 1. CONFIGURATION & DESIGN (CSS SPECIAL IMPRESSION A4)
 # ==============================================================================
 st.set_page_config(
     page_title="Audit Zonage Fiscal",
@@ -13,14 +13,14 @@ st.set_page_config(
 
 st.markdown("""
     <style>
+    /* --- STYLE ÉCRAN (Classique) --- */
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
     
-    /* STYLE GÉNÉRAL ÉCRAN */
     table {
         width: 100%;
         border-collapse: collapse;
         font-family: 'Segoe UI', sans-serif;
-        font-size: 0.85em;
+        font-size: 0.9em;
         margin-top: 15px;
         background-color: white;
         box-shadow: 0 2px 5px rgba(0,0,0,0.05);
@@ -52,9 +52,9 @@ st.markdown("""
         line-height: 1.4;
     }
     
-    /* LIGNE ZONE / CLASSEMENT */
+    /* Ligne ZONE / CLASSEMENT (Fond Vert) */
     .zone-row td {
-        background-color: #e8f5e9 !important; /* Important pour l'impression */
+        background-color: #e8f5e9 !important;
         font-weight: bold;
         color: #1b5e20 !important;
         text-align: center;
@@ -64,7 +64,7 @@ st.markdown("""
         print-color-adjust: exact;
     }
 
-    /* BOUTONS LIENS */
+    /* Boutons Liens (Ecran) */
     .btn-legifrance {
         display: inline-block;
         background-color: #fce4ec;
@@ -78,55 +78,37 @@ st.markdown("""
         text-align: center;
         white-space: nowrap;
     }
-    
-    /* BOUTON IMPRESSION (CSS ÉCRAN) */
-    .print-btn-container {
-        text-align: right; 
-        margin-bottom: 10px;
-    }
-    .print-btn {
-        background-color: #2c3e50;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 1em;
-        font-weight: bold;
-    }
-    .print-btn:hover {
-        background-color: #34495e;
-    }
 
-    /* ==========================================================================
-       STYLE SPÉCIFIQUE POUR L'IMPRESSION (CTRL+P)
-       ========================================================================== */
+    /* --- STYLE IMPRESSION (Ctrl+P) --- */
     @media print {
-        /* Cacher les éléments inutiles du navigateur et de Streamlit */
+        /* 1. Cacher toute l'interface Streamlit inutile */
         [data-testid="stSidebar"], 
         [data-testid="stHeader"], 
+        [data-testid="stToolbar"], 
         footer, 
         .stDeployButton,
-        .stButton,
-        div[data-testid="stVerticalBlock"] > div:first-child { /* Cache souvent les inputs */
+        iframe {
+            display: none !important;
+        }
+
+        /* 2. Cacher les champs de saisie (Selectbox, DateInput, Alertes) */
+        .stSelectbox, 
+        .stDateInput, 
+        .stAlert, 
+        .no-print {
             display: none !important;
         }
         
-        /* Cacher la zone de recherche et date pour faire propre */
-        .stSelectbox, .stDateInput, .print-btn-container, .print-btn {
-            display: none !important;
-        }
-        
-        /* Ajuster la mise en page A4 */
+        /* 3. Ajuster la page A4 Paysage */
         @page {
-            size: A4 landscape; /* Paysage conseillé pour le tableau large */
+            size: A4 landscape;
             margin: 1cm;
         }
         
         body {
-            font-size: 10pt;
             background-color: white;
-            -webkit-print-color-adjust: exact; /* Force l'impression des couleurs de fond */
+            font-size: 10pt; /* Réduire un peu la police pour tout faire tenir */
+            -webkit-print-color-adjust: exact; /* Force l'impression des couleurs (vert/gris) */
             print-color-adjust: exact;
         }
         
@@ -135,27 +117,35 @@ st.markdown("""
             max-width: 100% !important;
         }
         
-        /* Assurer que le tableau prend toute la largeur */
+        /* 4. Tableau Pleine Largeur */
         table {
             width: 100% !important;
-            font-size: 9pt; /* Un peu plus petit pour tout faire tenir */
-            page-break-inside: auto;
-        }
-        tr { page-break-inside: avoid; page-break-after: auto; }
-        
-        /* On garde les titres visibles */
-        h1, h2, h3 {
-            color: #2c3e50 !important;
-            margin-top: 0 !important;
+            box-shadow: none !important;
+            border: 2px solid #333;
         }
         
-        /* Style spécial pour les liens à l'impression */
+        th {
+            background-color: #2c3e50 !important;
+            color: white !important;
+            -webkit-print-color-adjust: exact; 
+        }
+
+        /* 5. Transformer les liens boutons en texte souligné simple */
         .btn-legifrance {
-            border: none;
-            background: none;
-            color: black;
-            padding: 0;
-            text-decoration: underline;
+            background: none !important;
+            border: none !important;
+            color: black !important;
+            text-decoration: underline !important;
+            padding: 0 !important;
+            font-size: 0.8em;
+        }
+        
+        /* Titre Propre */
+        h1 {
+            color: #2c3e50 !important;
+            font-size: 24pt !important;
+            text-align: center;
+            margin-bottom: 20px;
         }
     }
     </style>
@@ -227,7 +217,7 @@ DATA_MATRIX = {
     "ZFU": {
         "Nom": "ZFU-TE",
         "References_legales": "CGI art. 44 octies A",
-        # MISE À JOUR PROROGATION
+        # MISE À JOUR PROROGATION 2030
         "Periode": "Créations jusqu'au 31/12/2030<br><i>(en attente promulgation LF2026)</i>",
         "Duree_exo": "100 % 5 ans, puis 60 % (6e année), 40 % (7e), 20 % (8e).",
         "Impots_locaux": "Possible exonération sur délibération locale (totale puis progressive)",
@@ -296,7 +286,7 @@ DATA_MATRIX = {
     "QPV": {
         "Nom": "QPPV",
         "References_legales": "Décret n° 2023-1314 du 28 décembre 2023",
-        # MISE À JOUR PROROGATION
+        # MISE À JOUR PROROGATION 2030
         "Periode": "Créations jusqu'au 31/12/2030<br><i>(en attente promulgation LF2026)</i>",
         "Duree_exo": "N/C",
         "Impots_locaux": "exonération TFPB 5 ans sauf délibération contraire collectivité",
@@ -351,14 +341,7 @@ def render_html_table(regimes, row_data, date_op):
         ("Règles UE / plafonds d'aides", "Plafonds_UE")
     ]
 
-    # BOUTON IMPRESSION (HTML INJECTION POUR ACTION JS)
-    html_btn = """
-    <div class="print-btn-container">
-        <button class="print-btn" onclick="window.print()">🖨️ Imprimer la fiche (PDF)</button>
-    </div>
-    """
-    
-    html = html_btn + "<table>"
+    html = "<table>"
     
     # HEADER
     html += "<thead><tr><th>Critères</th>"
@@ -440,7 +423,7 @@ if df is not None:
         if nb_zfu not in ['0', 'nan', 'NON', '', 'Non']:
              is_zfu = True
 
-        # Prorogation 2030 prise en compte dans la logique
+        # Prorogation 2030
         if is_zfu and date_crea <= date(2030, 12, 31):
             detected.append("ZFU")
 
@@ -463,9 +446,11 @@ if df is not None:
         # AFFICHAGE
         if detected:
             detected = list(dict.fromkeys(detected)) # Anti-doublon
-            st.success(f"✅ {len(detected)} dispositif(s) identifié(s)")
             
-            # On passe date_crea pour le lien légifrance
+            # Instruction Impression
+            st.info("🖨️ **Pour imprimer cette fiche :** Appuyez sur **Ctrl+P** (Windows) ou **Cmd+P** (Mac). La mise en page s'adaptera automatiquement (format A4 Paysage).")
+            
+            # Tableau
             st.markdown(render_html_table(detected, row, date_crea), unsafe_allow_html=True)
             
             if "ZFU" in detected or "QPV" in detected:
