@@ -221,7 +221,7 @@ DATA_MATRIX = {
         "Condition_sociale": "Obligation emploi % salariés résidant en ZFU ou QPV à compter du 2ème salarié",
         "Exclusions_abus": "Non éligible si transfert/restructuration simple, ou changement de forme sans nouveauté.",
         "Plafonds_UE": "Plafond spécifique (50 k€/an + 5k€/emploi).",
-        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/LEGIARTI000026939165/",
+        "Legifrance_Base": "https://sig.ville.gouv.fr/atlas/ZFU",
         "Legifrance_Article": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051217764/",
         "Doc_Link": "https://les-aides.fr/aide/koT9/ddfip/zfu-te-zone-franche-urbaine-territoire-entrepreneur-exoneration-d-impots-sur-les-benefices.html"
     },
@@ -518,6 +518,7 @@ if df is not None:
 
 else:
     st.error("Erreur chargement Google Sheet.")
+
 
 
 
