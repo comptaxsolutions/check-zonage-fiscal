@@ -7,7 +7,7 @@ from datetime import date
 # ==============================================================================
 st.set_page_config(
     page_title="Vérification zonage fiscal",
-    page_icon="📍",
+    page_icon="🦁",
     layout="wide"
 )
 
@@ -46,13 +46,13 @@ st.markdown("""
         line-height: 1.4;
     }
 
-    /* Colonne des titres à gauche : LARGEUR ADAPTÉE */
+    /* Colonne des titres à gauche : LARGEUR ADAPTÉE AU CONTENU */
     td:first-child {
         background-color: #f8f9fa;
         font-weight: 700;
         color: #2c3e50;
-        width: 1%;
-        white-space: nowrap;
+        width: 1%;            /* Astuce pour réduire à la taille minimale du contenu */
+        white-space: nowrap;  /* Empêche le texte de passer à la ligne */
         padding-right: 20px;
     }
     
@@ -66,7 +66,7 @@ st.markdown("""
         border-bottom: 2px solid #2e7d32;
     }
 
-    /* Boutons Liens */
+    /* Boutons Liens (Rose) */
     .btn-legifrance {
         background-color: #fce4ec;
         color: #c2185b;
@@ -78,9 +78,10 @@ st.markdown("""
         font-size: 0.8em;
         white-space: nowrap;
         display: inline-block;
-        margin-bottom: 4px;
+        margin-bottom: 4px; /* Espacement entre les boutons */
     }
     
+    /* Boutons Article CGI (Violet clair pour distinguer) */
     .btn-cgi {
         background-color: #f3e5f5;
         color: #7b1fa2;
@@ -94,6 +95,7 @@ st.markdown("""
         display: inline-block;
     }
     
+    /* Boutons Documentation (Bleu) */
     .btn-doc {
         background-color: #e3f2fd;
         color: #1565c0;
@@ -139,6 +141,7 @@ st.markdown("""
             print-color-adjust: exact;
         }
         
+        /* Transformation des boutons en liens texte pour l'impression */
         .btn-legifrance, .btn-doc, .btn-cgi {
             border: none;
             background: none !important;
@@ -221,7 +224,7 @@ DATA_MATRIX = {
         "Condition_sociale": "Obligation emploi % salariés résidant en ZFU ou QPV à compter du 2ème salarié",
         "Exclusions_abus": "Non éligible si transfert/restructuration simple, ou changement de forme sans nouveauté.",
         "Plafonds_UE": "Plafond spécifique (50 k€/an + 5k€/emploi).",
-        "Legifrance_Base": "https://sig.ville.gouv.fr/atlas/ZFU",
+        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/LEGIARTI000026939165/",
         "Legifrance_Article": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051217764/",
         "Doc_Link": "https://les-aides.fr/aide/koT9/ddfip/zfu-te-zone-franche-urbaine-territoire-entrepreneur-exoneration-d-impots-sur-les-benefices.html"
     },
@@ -288,8 +291,8 @@ DATA_MATRIX = {
         "References_legales": "Décret n° 2023-1314",
         "Periode": "Créations jusqu'au <b>31/12/2030</b><br><i>(en attente promulgation LF2026)</i>",
         "Duree_exo": "N/C",
-        "Impots_locaux": "Exo TFPB 5 ans sauf délibération.",
-        "Social": "Non",
+        "Impots_locaux": "exonération TFPB 5 ans sauf délibération contraire collectivité",
+        "Social": "nan",
         "Nature_activite": "N/C",
         "Regime_fiscal": "N/C",
         "Taille": "N/C",
@@ -334,7 +337,7 @@ def render_html_table(regimes, row_data, date_op):
         ("Règles UE / plafonds d'aides", "Plafonds_UE")
     ]
 
-    # Titre dynamique selon le mode (Commune vs Référence)
+    # Titre dynamique
     commune_info = f"Commune : <b>{row_data['COMMUNE']}</b> (Code: {row_data['CODE']})"
     if row_data['COMMUNE'] == "MODE RÉFÉRENCE":
         commune_info = "<b>MODE RÉFÉRENCE (Tous dispositifs)</b>"
@@ -376,11 +379,11 @@ def render_html_table(regimes, row_data, date_op):
     for r in regimes:
         cell_content = ""
         
-        # Bouton 1: Texte de base
+        # Bouton 1: Texte de base (Liste communes)
         base_url = DATA_MATRIX[r].get("Legifrance_Base")
         if base_url:
             full_link = f"{base_url}{date_formatted}"
-            cell_content += f'<a href="{full_link}" target="_blank" class="btn-legifrance">Liste communes 🔗</a><br>'
+            cell_content += f'<a href="{full_link}" target="_blank" class="btn-legifrance">Liste communes</a><br>'
         
         # Bouton 2: Article spécifique
         article_url = DATA_MATRIX[r].get("Legifrance_Article")
@@ -430,7 +433,7 @@ if df is not None:
         st.markdown('<div class="no-print">', unsafe_allow_html=True)
         
         # ALERTE
-        st.warning("⚠️ Attention : La base de données est en cours de constitution. Toutes les communes ne sont pas encore référencées. Merci de me signaler également les erreurs/bugs éventuels.")
+        st.warning("⚠️ Attention : La base de données est en cours de constitution. Toutes les communes ne sont pas encore référencées.")
         
         c1, c2 = st.columns(2)
         with c1:
@@ -518,7 +521,3 @@ if df is not None:
 
 else:
     st.error("Erreur chargement Google Sheet.")
-
-
-
-
