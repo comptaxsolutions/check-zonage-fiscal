@@ -15,7 +15,7 @@ st.markdown("""
     <style>
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
     
-    /* TABLEAU STYLISÉ */
+    /* STYLE GÉNÉRAL ÉCRAN */
     table {
         width: 100%;
         border-collapse: collapse;
@@ -52,20 +52,22 @@ st.markdown("""
         line-height: 1.4;
     }
     
-    /* Style ligne ZONE */
+    /* LIGNE ZONE / CLASSEMENT */
     .zone-row td {
-        background-color: #e8f5e9;
+        background-color: #e8f5e9 !important; /* Important pour l'impression */
         font-weight: bold;
-        color: #1b5e20;
+        color: #1b5e20 !important;
         text-align: center;
         font-size: 1.1em;
         border-bottom: 2px solid #2e7d32;
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact;
     }
 
-    /* Style Bouton Légifrance */
+    /* BOUTONS LIENS */
     .btn-legifrance {
         display: inline-block;
-        background-color: #fce4ec; /* Fond rose clair Marianne */
+        background-color: #fce4ec;
         color: #c2185b;
         padding: 6px 12px;
         border-radius: 4px;
@@ -76,9 +78,85 @@ st.markdown("""
         text-align: center;
         white-space: nowrap;
     }
-    .btn-legifrance:hover {
-        background-color: #f8bbd0;
-        color: #880e4f;
+    
+    /* BOUTON IMPRESSION (CSS ÉCRAN) */
+    .print-btn-container {
+        text-align: right; 
+        margin-bottom: 10px;
+    }
+    .print-btn {
+        background-color: #2c3e50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1em;
+        font-weight: bold;
+    }
+    .print-btn:hover {
+        background-color: #34495e;
+    }
+
+    /* ==========================================================================
+       STYLE SPÉCIFIQUE POUR L'IMPRESSION (CTRL+P)
+       ========================================================================== */
+    @media print {
+        /* Cacher les éléments inutiles du navigateur et de Streamlit */
+        [data-testid="stSidebar"], 
+        [data-testid="stHeader"], 
+        footer, 
+        .stDeployButton,
+        .stButton,
+        div[data-testid="stVerticalBlock"] > div:first-child { /* Cache souvent les inputs */
+            display: none !important;
+        }
+        
+        /* Cacher la zone de recherche et date pour faire propre */
+        .stSelectbox, .stDateInput, .print-btn-container, .print-btn {
+            display: none !important;
+        }
+        
+        /* Ajuster la mise en page A4 */
+        @page {
+            size: A4 landscape; /* Paysage conseillé pour le tableau large */
+            margin: 1cm;
+        }
+        
+        body {
+            font-size: 10pt;
+            background-color: white;
+            -webkit-print-color-adjust: exact; /* Force l'impression des couleurs de fond */
+            print-color-adjust: exact;
+        }
+        
+        .main .block-container {
+            padding: 0 !important;
+            max-width: 100% !important;
+        }
+        
+        /* Assurer que le tableau prend toute la largeur */
+        table {
+            width: 100% !important;
+            font-size: 9pt; /* Un peu plus petit pour tout faire tenir */
+            page-break-inside: auto;
+        }
+        tr { page-break-inside: avoid; page-break-after: auto; }
+        
+        /* On garde les titres visibles */
+        h1, h2, h3 {
+            color: #2c3e50 !important;
+            margin-top: 0 !important;
+        }
+        
+        /* Style spécial pour les liens à l'impression */
+        .btn-legifrance {
+            border: none;
+            background: none;
+            color: black;
+            padding: 0;
+            text-decoration: underline;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -143,13 +221,14 @@ def load_data():
         return None
 
 # ==============================================================================
-# 3. MATRICE DE DONNÉES (AVEC LIENS CORRECTS)
+# 3. MATRICE DE DONNÉES (MIS À JOUR 2030)
 # ==============================================================================
 DATA_MATRIX = {
     "ZFU": {
         "Nom": "ZFU-TE",
         "References_legales": "CGI art. 44 octies A",
-        "Periode": "Créations jusqu'au 31/12/2025<br><i>(prorogation LF 2026 – en attente)</i>",
+        # MISE À JOUR PROROGATION
+        "Periode": "Créations jusqu'au 31/12/2030<br><i>(en attente promulgation LF2026)</i>",
         "Duree_exo": "100 % 5 ans, puis 60 % (6e année), 40 % (7e), 20 % (8e).",
         "Impots_locaux": "Possible exonération sur délibération locale (totale puis progressive)",
         "Social": "Exonération spécifique (L.131-4-2)", 
@@ -217,7 +296,8 @@ DATA_MATRIX = {
     "QPV": {
         "Nom": "QPPV",
         "References_legales": "Décret n° 2023-1314 du 28 décembre 2023",
-        "Periode": "Créations jusqu'au 31/12/2025<br><i>(prorogation LF 2026 – en attente)</i>",
+        # MISE À JOUR PROROGATION
+        "Periode": "Créations jusqu'au 31/12/2030<br><i>(en attente promulgation LF2026)</i>",
         "Duree_exo": "N/C",
         "Impots_locaux": "exonération TFPB 5 ans sauf délibération contraire collectivité",
         "Social": "nan",
@@ -271,7 +351,14 @@ def render_html_table(regimes, row_data, date_op):
         ("Règles UE / plafonds d'aides", "Plafonds_UE")
     ]
 
-    html = "<table>"
+    # BOUTON IMPRESSION (HTML INJECTION POUR ACTION JS)
+    html_btn = """
+    <div class="print-btn-container">
+        <button class="print-btn" onclick="window.print()">🖨️ Imprimer la fiche (PDF)</button>
+    </div>
+    """
+    
+    html = html_btn + "<table>"
     
     # HEADER
     html += "<thead><tr><th>Critères</th>"
@@ -286,7 +373,6 @@ def render_html_table(regimes, row_data, date_op):
     html += "</tr>"
     
     # LIGNE 2 : LIEN LÉGIFRANCE (DYNAMIQUE DATE)
-    # Format YYYY-MM-DD
     date_formatted = date_op.strftime("%Y-%m-%d")
     
     html += "<tr><td>VÉRIFICATION SOURCE</td>"
@@ -354,7 +440,8 @@ if df is not None:
         if nb_zfu not in ['0', 'nan', 'NON', '', 'Non']:
              is_zfu = True
 
-        if is_zfu and date_crea <= date(2025, 12, 31):
+        # Prorogation 2030 prise en compte dans la logique
+        if is_zfu and date_crea <= date(2030, 12, 31):
             detected.append("ZFU")
 
         # 3. AFR
@@ -369,7 +456,8 @@ if df is not None:
         if nb_qpv not in ['0', 'nan', 'NON', '', 'Non']:
             is_qpv = True
         
-        if is_qpv:
+        # Prorogation 2030
+        if is_qpv and date_crea <= date(2030, 12, 31):
             detected.append("QPV")
 
         # AFFICHAGE
