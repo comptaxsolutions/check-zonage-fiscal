@@ -378,7 +378,7 @@ def render_html_table(regimes, row_data, date_op):
         base_url = DATA_MATRIX[r].get("Legifrance_Base")
         if base_url:
             full_link = f"{base_url}{date_formatted}"
-            cell_content += f'<a href="{full_link}" target="_blank" class="btn-legifrance">Texte à date 🔗</a><br>'
+            cell_content += f'<a href="{full_link}" target="_blank" class="btn-legifrance">Lien vers liste communes 🔗</a><br>'
         
         # Bouton 2: Article spécifique (Legifrance Article)
         article_url = DATA_MATRIX[r].get("Legifrance_Article")
@@ -489,3 +489,4 @@ if df is not None:
 
 else:
     st.error("Erreur chargement Google Sheet.")
+
