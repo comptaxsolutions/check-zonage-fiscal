@@ -46,12 +46,14 @@ st.markdown("""
         line-height: 1.4;
     }
 
-    /* Colonne des titres à gauche */
+    /* Colonne des titres à gauche : LARGEUR ADAPTÉE AU CONTENU */
     td:first-child {
         background-color: #f8f9fa;
         font-weight: 700;
         color: #2c3e50;
-        width: 15%;
+        width: 1%;            /* Astuce pour réduire à la taille minimale du contenu */
+        white-space: nowrap;  /* Empêche le texte de passer à la ligne */
+        padding-right: 20px;
     }
     
     /* Ligne ZONE / CLASSEMENT (Vert) */
@@ -64,16 +66,31 @@ st.markdown("""
         border-bottom: 2px solid #2e7d32;
     }
 
-    /* Boutons Liens Légifrance (Rose) */
+    /* Boutons Liens (Rose) */
     .btn-legifrance {
         background-color: #fce4ec;
         color: #c2185b;
-        padding: 5px 10px;
+        padding: 4px 8px;
         border-radius: 4px;
         text-decoration: none;
         font-weight: bold;
         border: 1px solid #f8bbd0;
-        font-size: 0.85em;
+        font-size: 0.8em;
+        white-space: nowrap;
+        display: inline-block;
+        margin-bottom: 4px; /* Espacement entre les boutons */
+    }
+    
+    /* Boutons Article CGI (Violet clair pour distinguer) */
+    .btn-cgi {
+        background-color: #f3e5f5;
+        color: #7b1fa2;
+        padding: 4px 8px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: bold;
+        border: 1px solid #e1bee7;
+        font-size: 0.8em;
         white-space: nowrap;
         display: inline-block;
     }
@@ -125,12 +142,13 @@ st.markdown("""
         }
         
         /* Transformation des boutons en liens texte pour l'impression */
-        .btn-legifrance, .btn-doc {
+        .btn-legifrance, .btn-doc, .btn-cgi {
             border: none;
             background: none !important;
             color: black !important;
             text-decoration: underline;
             padding: 0;
+            margin-right: 10px;
         }
         
         .no-print { display: none !important; }
@@ -189,7 +207,7 @@ def load_data():
         return None
 
 # ==============================================================================
-# 3. MATRICE DE DONNÉES (AVEC LIENS DOCUMENTATION)
+# 3. MATRICE DE DONNÉES (URLS MISES A JOUR)
 # ==============================================================================
 DATA_MATRIX = {
     "ZFU": {
@@ -201,12 +219,13 @@ DATA_MATRIX = {
         "Social": "Exonération spécifique (L.131-4-2)", 
         "Nature_activite": "Industrielles, commerciales, artisanales, BNC.<br><i>Exclusions : crédit-bail mobilier, location logements + certaines activités particulières</i>",
         "Regime_fiscal": "Tout régime (micro ou réel)",
-        "Taille": "< 50 salariés, CA ≤ 10 M€ ou bilan ≤ 10 M€. Capital non détenu ≥ 25 % par grandes entreprises",
+        "Taille": "< 50 salariés, CA ≤ 10 M€. Capital < 25 % par grandes ent.",
         "Implantation": "Implantation matérielle et activité effective (locaux, clientèle, production) en ZFU. Possible non sédentarité sous conditions.",
         "Condition_sociale": "Obligation emploi % salariés résidant en ZFU ou QPV à compter du 2ème salarié",
         "Exclusions_abus": "Non éligible si transfert/restructuration simple, ou changement de forme sans nouveauté.",
         "Plafonds_UE": "Plafond spécifique (50 k€/an + 5k€/emploi).",
         "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/LEGIARTI000026939165/",
+        "Legifrance_Article": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051217764/",
         "Doc_Link": "https://les-aides.fr/aide/koT9/ddfip/zfu-te-zone-franche-urbaine-territoire-entrepreneur-exoneration-d-impots-sur-les-benefices.html"
     },
     
@@ -225,6 +244,7 @@ DATA_MATRIX = {
         "Exclusions_abus": "Non éligible si extension d'activité existante (dépendance, franchise, etc.).",
         "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans).",
         "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000046003627/",
+        "Legifrance_Article": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000048846371/",
         "Doc_Link": "https://les-aides.fr/aide/kzj9/ddfip/zafr-zone-d-aide-a-finalite-regionale-exoneration-d-impot-sur-les-benefices.html"
     },
 
@@ -243,6 +263,7 @@ DATA_MATRIX = {
         "Exclusions_abus": "Non éligible si activité déjà exonérée dans les 5 ans (ZFU, ZAFR, BER…), ou reprise intra-familiale (sauf 1ère reprise par descendant).",
         "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans).",
         "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000049746820/",
+        "Legifrance_Article": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051217832/",
         "Doc_Link": "https://les-aides.fr/aide/cUFf3w/ddfip/frr-exoneration-d-impot-sur-les-benefices.html"
     },
     
@@ -261,6 +282,7 @@ DATA_MATRIX = {
         "Exclusions_abus": "Non éligible si activité déjà exonérée dans les 5 ans (ZFU, ZAFR, BER…), ou reprise intra-familiale (sauf 1ère reprise par descendant).",
         "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans).",
         "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000051871914/",
+        "Legifrance_Article": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051217832/",
         "Doc_Link": "https://les-aides.fr/aide/cUFf3w/ddfip/frr-exoneration-d-impot-sur-les-benefices.html"
     },
 
@@ -279,7 +301,7 @@ DATA_MATRIX = {
         "Exclusions_abus": "N/C",
         "Plafonds_UE": "N/C",
         "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000048707389/",
-        "Doc_Link": None # Pas de lien fourni pour QPV
+        "Doc_Link": None
     }
 }
 
@@ -315,7 +337,6 @@ def render_html_table(regimes, row_data, date_op):
         ("Règles UE / plafonds d'aides", "Plafonds_UE")
     ]
 
-    # Conteneur imprimable "Overlay"
     html = f"""
     <div id='printable-area'>
         <div class='main-title'>Vérification zonage fiscal</div>
@@ -337,7 +358,7 @@ def render_html_table(regimes, row_data, date_op):
         html += f"<td>{get_zone_display(r, row_data)}</td>"
     html += "</tr>"
     
-    # 2. DOCUMENTATION (Nouvelle Ligne)
+    # 2. DOCUMENTATION
     html += "<tr><td>DOCUMENTATION</td>"
     for r in regimes:
         doc_url = DATA_MATRIX[r].get("Doc_Link")
@@ -347,19 +368,36 @@ def render_html_table(regimes, row_data, date_op):
             html += "<td>-</td>"
     html += "</tr>"
     
-    # 3. VERIFICATION SOURCE
+    # 3. VERIFICATION SOURCE (DOUBLE BOUTON)
     date_formatted = date_op.strftime("%Y-%m-%d")
     html += "<tr><td>VÉRIFICATION SOURCE</td>"
     for r in regimes:
+        cell_content = ""
+        
+        # Bouton 1: Texte de base (Legifrance Base)
         base_url = DATA_MATRIX[r].get("Legifrance_Base")
         if base_url:
             full_link = f"{base_url}{date_formatted}"
-            html += f'<td><a href="{full_link}" target="_blank" class="btn-legifrance">Texte à date 🔗</a></td>'
-        else:
-            html += "<td>-</td>"
+            cell_content += f'<a href="{full_link}" target="_blank" class="btn-legifrance">Texte à date 🔗</a><br>'
+        
+        # Bouton 2: Article spécifique (Legifrance Article)
+        article_url = DATA_MATRIX[r].get("Legifrance_Article")
+        ref_text = DATA_MATRIX[r].get("References_legales")
+        # On nettoie le texte de la référence pour le bouton
+        if ref_text:
+            clean_ref = ref_text.split("<br>")[0] # Prend juste le début "CGI art..."
+        
+        if article_url:
+            full_article_link = f"{article_url}{date_formatted}"
+            cell_content += f'<a href="{full_article_link}" target="_blank" class="btn-cgi">{clean_ref}</a>'
+            
+        if not cell_content:
+            cell_content = "-"
+            
+        html += f"<td>{cell_content}</td>"
     html += "</tr>"
 
-    # 4. LE RESTE DU TABLEAU
+    # 4. RESTE DU TABLEAU
     for label, key in rows_config:
         html += f"<tr><td>{label}</td>"
         for r in regimes:
@@ -379,14 +417,13 @@ df = load_data()
 st.markdown("<h1 class='main-title'>Vérification zonage fiscal</h1>", unsafe_allow_html=True)
 
 if df is not None:
-    # INPUTS (Non imprimables)
+    # INPUTS
     with st.container():
         st.markdown('<div class="no-print">', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
             choix_commune = st.selectbox("📍 Commune", df['Label_Recherche'], index=None, placeholder="Rechercher...")
         with c2:
-            # Blocage date avant 01/01/2025
             date_crea = st.date_input("📅 Date de l'opération", date.today(), 
                                       min_value=date(2025, 1, 1), 
                                       format="DD/MM/YYYY")
@@ -410,7 +447,7 @@ if df is not None:
             else:
                 detected.append("ZFRR_CLASSIC")
 
-        # 2. ZFU (2030)
+        # 2. ZFU
         nb_zfu = str(row.get('NB_ZFU', '0')).strip()
         is_zfu = False
         if nb_zfu not in ['0', 'nan', 'NON', '', 'Non']: is_zfu = True
@@ -423,7 +460,7 @@ if df is not None:
              if date_crea <= date(2027, 12, 31):
                 detected.append("AFR")
         
-        # 4. QPV (2030)
+        # 4. QPV
         nb_qpv = str(row.get('NB_QPV', '0')).strip()
         is_qpv = False
         if nb_qpv not in ['0', 'nan', 'NON', '', 'Non']: is_qpv = True
@@ -436,10 +473,9 @@ if df is not None:
             
             st.success(f"✅ {len(detected)} dispositif(s) identifié(s)")
             
-            # Injection du Tableau
+            # Injection Tableau
             st.markdown(render_html_table(detected, row, date_crea), unsafe_allow_html=True)
             
-            # Instruction Impression
             st.markdown("""
             <div class='no-print' style='text-align:center; margin-top:20px; color:#666;'>
                 <small>Pour imprimer, faites <b>Ctrl+P</b>. Cochez "Graphiques d'arrière-plan" pour voir les couleurs.</small>
