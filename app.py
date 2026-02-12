@@ -7,7 +7,7 @@ from datetime import date
 # ==============================================================================
 st.set_page_config(
     page_title="Vérification zonage fiscal",
-    page_icon="🦁",
+    page_icon=":round_pushpin:",
     layout="wide"
 )
 
@@ -379,7 +379,7 @@ def render_html_table(regimes, row_data, date_op):
     for r in regimes:
         cell_content = ""
         
-        # Bouton 1: Texte de base (Liste communes)
+        # Bouton 1: Texte de base (Renommé en "Liste communes")
         base_url = DATA_MATRIX[r].get("Legifrance_Base")
         if base_url:
             full_link = f"{base_url}{date_formatted}"
@@ -497,7 +497,7 @@ if df is not None:
             regimes_to_display.append("QPV")
 
     # RENDER FINAL
-    if row_to_display:
+    if row_to_display is not None:
         st.divider()
         if regimes_to_display:
             # On dédoublonne
