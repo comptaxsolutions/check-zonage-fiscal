@@ -430,7 +430,7 @@ if df is not None:
         st.markdown('<div class="no-print">', unsafe_allow_html=True)
         
         # ALERTE
-        st.warning("⚠️ Attention : La base de données est en cours de constitution. Toutes les communes ne sont pas encore référencées.")
+        st.warning("⚠️ Attention : La base de données est en cours de constitution. Toutes les communes ne sont pas encore référencées. Merci de me signaler également les erreurs/bugs éventuels.")
         
         c1, c2 = st.columns(2)
         with c1:
@@ -518,4 +518,5 @@ if df is not None:
 
 else:
     st.error("Erreur chargement Google Sheet.")
+
 
