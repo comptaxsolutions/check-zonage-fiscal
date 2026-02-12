@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import date
 
 # ==============================================================================
-# 1. CONFIGURATION & DESIGN (CSS ULTRA-PRINT)
+# 1. CONFIGURATION & DESIGN (CSS "OVERLAY" POUR IMPRESSION)
 # ==============================================================================
 st.set_page_config(
     page_title="Audit Zonage Fiscal",
@@ -13,134 +13,117 @@ st.set_page_config(
 
 st.markdown("""
     <style>
-    /* --- AFFICHAGE ÉCRAN STANDARD --- */
+    /* --- 1. DESIGN ÉCRAN (Joli et Moderne) --- */
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
     
-    .main-title { font-size: 2.5em; color: #2c3e50; text-align: center; margin-bottom: 10px; }
-    .sub-title { font-size: 1.2em; color: #7f8c8d; text-align: center; margin-bottom: 30px; }
+    .main-title { font-size: 2em; color: #2c3e50; text-align: center; margin-bottom: 5px; font-weight: bold; }
+    .sub-title { font-size: 1.1em; color: #555; text-align: center; margin-bottom: 20px; }
 
     table {
         width: 100%;
         border-collapse: collapse;
-        font-family: 'Arial', sans-serif; /* Police standard qui passe bien partout */
-        font-size: 0.85em;
-        margin-top: 15px;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        font-size: 0.9em;
         background-color: white;
         border: 1px solid #ddd;
+        margin-bottom: 20px;
     }
+    
     th {
         background-color: #2c3e50;
         color: white;
-        padding: 10px;
+        padding: 12px;
         text-align: center;
         text-transform: uppercase;
         border: 1px solid #34495e;
         width: 18%;
     }
-    td:first-child {
-        background-color: #f1f2f6;
-        font-weight: 800;
-        color: #2c3e50;
-        text-align: left;
-        padding-left: 10px;
-        border-right: 2px solid #ccc;
-        width: 15%;
-    }
+    
     td {
-        padding: 8px;
+        padding: 10px;
         border: 1px solid #ddd;
         vertical-align: top;
-        text-align: left;
         color: #333;
-        line-height: 1.3;
-    }
-    
-    /* LIGNE ZONE / CLASSEMENT */
-    .zone-row td {
-        background-color: #dcedc8 !important; /* Vert clair */
-        font-weight: 900;
-        color: #1b5e20 !important;
-        text-align: center;
-        font-size: 1.1em;
-        border-bottom: 2px solid #33691e;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        line-height: 1.4;
     }
 
-    /* BOUTONS LIENS */
+    /* Colonne des titres à gauche */
+    td:first-child {
+        background-color: #f8f9fa;
+        font-weight: 700;
+        color: #2c3e50;
+        width: 15%;
+    }
+    
+    /* Ligne ZONE / CLASSEMENT (Vert) */
+    .zone-row td {
+        background-color: #e8f5e9 !important;
+        color: #1b5e20 !important;
+        font-weight: bold;
+        text-align: center;
+        font-size: 1.1em;
+        border-bottom: 2px solid #2e7d32;
+    }
+
+    /* Boutons Liens */
     .btn-legifrance {
-        display: inline-block;
         background-color: #fce4ec;
         color: #c2185b;
-        padding: 4px 8px;
+        padding: 5px 10px;
         border-radius: 4px;
         text-decoration: none;
         font-weight: bold;
         border: 1px solid #f8bbd0;
-        font-size: 0.8em;
+        font-size: 0.85em;
         white-space: nowrap;
     }
 
-    /* INSTRUCTIONS D'IMPRESSION (Visibles seulement à l'écran) */
-    .print-instruction {
-        background-color: #fff3cd;
-        border: 1px solid #ffeeba;
-        color: #856404;
-        padding: 10px;
-        border-radius: 5px;
-        text-align: center;
-        margin-bottom: 20px;
-        font-size: 0.9em;
-    }
-
-    /* ==========================================================================
-       STYLE D'IMPRESSION (LE COEUR DU SYSTÈME)
-       ========================================================================== */
+    /* --- 2. DESIGN IMPRESSION (La méthode Radicale) --- */
     @media print {
-        /* 1. FORCE LE PAYSAGE (Chrome/Edge) */
-        @page {
-            size: A4 landscape;
-            margin: 5mm; /* Marges très fines */
-        }
-
-        /* 2. CACHER TOUT LE RESTE */
+        /* Cacher TOUT le corps de la page par défaut */
         body * {
             visibility: hidden;
-            height: 0;
-            overflow: hidden;
         }
 
-        /* 3. AFFICHER SEULEMENT LA ZONE D'IMPRESSION */
+        /* Isoler la zone imprimable et la rendre visible */
         #printable-area, #printable-area * {
             visibility: visible;
-            height: auto;
-            overflow: visible;
         }
 
-        /* 4. REPOSITIONNER LE CONTENU EN HAUT À GAUCHE */
+        /* Positionner la zone imprimable par-dessus tout le reste */
         #printable-area {
-            position: absolute;
+            position: fixed;
             left: 0;
             top: 0;
-            width: 100%;
+            width: 100vw;
+            height: 100vh;
             margin: 0;
-            padding: 0;
+            padding: 20px;
+            background-color: white; /* Fond blanc forcé */
+            z-index: 9999; /* Au-dessus de tout */
+        }
+        
+        /* Force Paysage */
+        @page {
+            size: A4 landscape;
+            margin: 1cm;
         }
 
-        /* 5. AJUSTEMENT DU TABLEAU POUR TENIR SUR UNE PAGE */
+        /* Ajustements du tableau pour l'impression */
         table {
             width: 100% !important;
-            font-size: 9pt !important; /* Réduire police */
-            border: 2px solid #333;
+            font-size: 9pt !important; /* Réduire un peu la police */
+            border: 2px solid #000;
         }
         
         th {
             background-color: #2c3e50 !important;
             color: white !important;
-            -webkit-print-color-adjust: exact; 
+            -webkit-print-color-adjust: exact; /* Force la couleur de fond */
+            print-color-adjust: exact;
         }
         
-        /* Transformer les boutons en liens texte simples */
+        /* Les liens deviennent du texte noir souligné */
         .btn-legifrance {
             border: none;
             background: none !important;
@@ -149,7 +132,7 @@ st.markdown("""
             padding: 0;
         }
         
-        /* Cacher le bouton d'impression lui-même */
+        /* Cacher les éléments "no-print" */
         .no-print {
             display: none !important;
         }
@@ -158,7 +141,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. CHARGEMENT INTELLIGENT DES DONNÉES
+# 2. CHARGEMENT DES DONNÉES
 # ==============================================================================
 @st.cache_data(ttl=600)
 def load_data():
@@ -208,7 +191,7 @@ def load_data():
         return None
 
 # ==============================================================================
-# 3. MATRICE DE DONNÉES (2030 UPDATED)
+# 3. MATRICE DE DONNÉES (VALIDÉE 2030)
 # ==============================================================================
 DATA_MATRIX = {
     "ZFU": {
@@ -216,72 +199,76 @@ DATA_MATRIX = {
         "References_legales": "CGI art. 44 octies A",
         "Periode": "Créations jusqu'au <b>31/12/2030</b><br><i>(en attente promulgation LF2026)</i>",
         "Duree_exo": "100 % 5 ans, puis 60 % (6e), 40 % (7e), 20 % (8e).",
-        "Impots_locaux": "Exonération possible sur délibération.",
+        "Impots_locaux": "Possible exonération sur délibération locale (totale puis progressive)",
         "Social": "Exonération spécifique (L.131-4-2)", 
-        "Nature_activite": "Indus, Com, Art, BNC.<br><i>Exclusions : location logements, crédit-bail.</i>",
+        "Nature_activite": "Industrielles, commerciales, artisanales, BNC.<br><i>Exclusions : crédit-bail mobilier, location logements + certaines activités particulières</i>",
         "Regime_fiscal": "Tout régime (micro ou réel)",
         "Taille": "< 50 salariés, CA ≤ 10 M€. Capital < 25 % par grandes ent.",
-        "Implantation": "Activité matérielle effective en ZFU. Non sédentaire sous conditions.",
-        "Condition_sociale": "50% salariés résidant ZFU/QPV (dès le 2e salarié)",
-        "Exclusions_abus": "Transfert simple exclu.",
-        "Plafonds_UE": "50 k€/an + 5k€/emploi.",
+        "Implantation": "Implantation matérielle et activité effective (locaux, clientèle, production) en ZFU. Possible non sédentarité sous conditions.",
+        "Condition_sociale": "Obligation emploi % salariés résidant en ZFU ou QPV à compter du 2ème salarié",
+        "Exclusions_abus": "Non éligible si transfert/restructuration simple, ou changement de forme sans nouveauté.",
+        "Plafonds_UE": "Plafond spécifique (50 k€/an + 5k€/emploi).",
         "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/LEGIARTI000026939165/"
     },
+    
     "AFR": {
         "Nom": "ZAFR (Zones AFR)",
         "References_legales": "CGI art. 44 sexies",
         "Periode": "Créations jusqu'au 31/12/2027",
-        "Duree_exo": "100 % 2 ans, puis 75 %, 50 %, 25 %.",
-        "Impots_locaux": "Exonération possible sur délibération.",
+        "Duree_exo": "100 % 2 ans, puis 75 % (3e), 50 % (4e), 25 % (5e).",
+        "Impots_locaux": "Possible exonération sur délibération locale",
         "Social": "Non",
-        "Nature_activite": "Indus, Com, Art, BNC (si Sté IS).",
+        "Nature_activite": "Industrielles, commerciales, artisanales, activités BNC exercées en société IS avec ≥ 3 salariés).<br><i>Exclusion activités particulières</i>",
         "Regime_fiscal": "Régime réel obligatoire",
-        "Taille": "PME. Capital < 50 % par autres sociétés.",
-        "Implantation": "Siège + moyens en zone.",
+        "Taille": "Pas de seuil général. Condition capital : pas détenu > 50 % par d'autres sociétés.",
+        "Implantation": "Siège + moyens en zone. Activité non sédentaire : ≥ 85 % du CA en zone (sinon prorata limité).",
         "Condition_sociale": "3 salariés minimum si activité BNC",
-        "Exclusions_abus": "Extension d'activité existante.",
-        "Plafonds_UE": "De minimis (300 k€).",
+        "Exclusions_abus": "Non éligible si extension d'activité existante (dépendance, franchise, etc.).",
+        "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans).",
         "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000046003627/"
     },
+
     "ZFRR_CLASSIC": {
         "Nom": "ZFRR (Classique)",
         "References_legales": "CGI art. 44 quindecies A",
         "Periode": "01/07/2024 – 31/12/2029",
-        "Duree_exo": "100 % 5 ans, puis 75 %, 50 %, 25 %.",
-        "Impots_locaux": "Exonération possible sur délibération.",
+        "Duree_exo": "100 % 5 ans, puis 75 % (6e), 50 % (7e), 25 % (8e).",
+        "Impots_locaux": "Possible exonération sur délibération locale",
         "Social": "Oui (cotisations patronales)",
-        "Nature_activite": "Indus, Com, Art, Lib.<br><i>Excl: Banque, Immo.</i>",
+        "Nature_activite": "Industrielles, commerciales, artisanales, libérales.<br><i>Exclusion activités particulières</i>",
         "Regime_fiscal": "Régime réel obligatoire",
-        "Taille": "< 11 salariés.",
-        "Implantation": "Siège + moyens exclusifs en zone.",
+        "Taille": "< 11 salariés.<br><i>Pas de condition liée au capital mais demandé dans le modèle de rescrit</i>",
+        "Implantation": "Siège + moyens exclusivement en zone. Activité non sédentaire : CA hors zone ≤ 25 %.",
         "Condition_sociale": "cf taille entreprise",
-        "Exclusions_abus": "Reprise familiale.",
-        "Plafonds_UE": "De minimis (300 k€).",
+        "Exclusions_abus": "Non éligible si activité déjà exonérée dans les 5 ans (ZFU, ZAFR, BER…), ou reprise intra-familiale (sauf 1ère reprise par descendant).",
+        "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans).",
         "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000049746820/"
     },
+    
     "ZFRR_PLUS": {
         "Nom": "ZFRR+ (Renforcée)",
         "References_legales": "CGI art. 44 quindecies A",
-        "Periode": "01/01/2025 – 31/12/2029",
-        "Duree_exo": "100 % 5 ans, puis 75 %, 50 %, 25 %.",
-        "Impots_locaux": "Exonération possible sur délibération.",
+        "Periode": "01/01/2025 – 31/12/2029 + admet extensions d'établissement",
+        "Duree_exo": "100 % 5 ans, puis 75 % (6e), 50 % (7e), 25 % (8e).",
+        "Impots_locaux": "Possible exonération sur délibération locale",
         "Social": "Oui (cotisations patronales)",
-        "Nature_activite": "Indus, Com, Art, Lib.",
-        "Regime_fiscal": "Réel ou Micro",
-        "Taille": "Création : PME. Reprise : < 11 sal.",
-        "Implantation": "Non exclusif.",
+        "Nature_activite": "Industrielles, commerciales, artisanales, libérales.<br><i>Exclusion activités particulières</i>",
+        "Regime_fiscal": "réel ou micro",
+        "Taille": "Création : PME UE (moins de 250 salariés, CA ≤ 50 M€, bilan ≤ 43 M€). Reprise : < 11 salariés.",
+        "Implantation": "Pas d'exclusivité. Sédentaire : prorata de CA en zone. Non sédentaire : règle des 25 % + prorata si locaux en/hors zone.",
         "Condition_sociale": "cf taille entreprise",
-        "Exclusions_abus": "Reprise familiale.",
-        "Plafonds_UE": "De minimis (300 k€).",
+        "Exclusions_abus": "Non éligible si activité déjà exonérée dans les 5 ans (ZFU, ZAFR, BER…), ou reprise intra-familiale (sauf 1ère reprise par descendant).",
+        "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans).",
         "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000051871914/"
     },
+
     "QPV": {
         "Nom": "QPPV",
         "References_legales": "Décret n° 2023-1314",
         "Periode": "Créations jusqu'au <b>31/12/2030</b><br><i>(en attente promulgation LF2026)</i>",
         "Duree_exo": "N/C",
-        "Impots_locaux": "Exo TFPB 5 ans sauf délibération.",
-        "Social": "Non",
+        "Impots_locaux": "exonération TFPB 5 ans sauf délibération contraire collectivité",
+        "Social": "nan",
         "Nature_activite": "N/C",
         "Regime_fiscal": "N/C",
         "Taille": "N/C",
@@ -325,32 +312,41 @@ def render_html_table(regimes, row_data, date_op):
         ("Règles UE / plafonds d'aides", "Plafonds_UE")
     ]
 
-    html = "<div id='printable-area'>"
-    html += f"<div class='main-title'>Audit Zonage Fiscal</div>"
-    html += f"<div class='sub-title'>Commune : <b>{row_data['COMMUNE']}</b> (Code: {row_data['CODE']}) | Date opération : {date_op.strftime('%d/%m/%Y')}</div>"
+    # CONTENEUR SPECIAL POUR L'IMPRESSION (ID=printable-area)
+    html = f"""
+    <div id='printable-area'>
+        <div class='main-title'>Audit Zonage Fiscal</div>
+        <div class='sub-title'>
+            Commune : <b>{row_data['COMMUNE']}</b> (Code: {row_data['CODE']}) | 
+            Date opération : {date_op.strftime('%d/%m/%Y')}
+        </div>
+        <table>
+            <thead><tr><th>Critères</th>
+    """
     
-    html += "<table>"
-    html += "<thead><tr><th>Critères</th>"
     for r in regimes:
         html += f"<th>{DATA_MATRIX[r]['Nom']}</th>"
     html += "</tr></thead><tbody>"
     
+    # LIGNE ZONE
     html += "<tr class='zone-row'><td>ZONE / CLASSEMENT</td>"
     for r in regimes:
         html += f"<td>{get_zone_display(r, row_data)}</td>"
     html += "</tr>"
     
+    # LIGNE LIENS
     date_formatted = date_op.strftime("%Y-%m-%d")
     html += "<tr><td>VÉRIFICATION SOURCE</td>"
     for r in regimes:
         base_url = DATA_MATRIX[r].get("Legifrance_Base")
         if base_url:
             full_link = f"{base_url}{date_formatted}"
-            html += f'<td><a href="{full_link}" target="_blank" class="btn-legifrance">Voir le texte à date 🔗</a></td>'
+            html += f'<td><a href="{full_link}" target="_blank" class="btn-legifrance">Texte à date 🔗</a></td>'
         else:
             html += "<td>-</td>"
     html += "</tr>"
 
+    # CORPS DU TABLEAU
     for label, key in rows_config:
         html += f"<tr><td>{label}</td>"
         for r in regimes:
@@ -367,13 +363,12 @@ def render_html_table(regimes, row_data, date_op):
 # ==============================================================================
 df = load_data()
 
-# PARTIE VISIBLE UNIQUEMENT À L'ÉCRAN
-st.title("Audit Zonage Fiscal")
-st.markdown("**Outil d'aide à la décision - Hauts-de-France**")
+st.markdown("<h1 style='text-align: center; color: #2c3e50;'>Audit Zonage Fiscal</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #7f8c8d;'>Outil d'aide à la décision (Hauts-de-France)</p>", unsafe_allow_html=True)
 st.write("---")
 
 if df is not None:
-    # Conteneur non imprimable pour les inputs
+    # Conteneur pour inputs (sera caché à l'impression)
     with st.container():
         st.markdown('<div class="no-print">', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
@@ -401,11 +396,10 @@ if df is not None:
             else:
                 detected.append("ZFRR_CLASSIC")
 
-        # 2. ZFU (Detection valeur brute)
+        # 2. ZFU (2030)
         nb_zfu = str(row.get('NB_ZFU', '0')).strip()
         is_zfu = False
         if nb_zfu not in ['0', 'nan', 'NON', '', 'Non']: is_zfu = True
-        # Prorogation 2030
         if is_zfu and date_crea <= date(2030, 12, 31):
             detected.append("ZFU")
 
@@ -415,11 +409,10 @@ if df is not None:
              if date_crea <= date(2027, 12, 31):
                 detected.append("AFR")
         
-        # 4. QPV
+        # 4. QPV (2030)
         nb_qpv = str(row.get('NB_QPV', '0')).strip()
         is_qpv = False
         if nb_qpv not in ['0', 'nan', 'NON', '', 'Non']: is_qpv = True
-        # Prorogation 2030
         if is_qpv and date_crea <= date(2030, 12, 31):
             detected.append("QPV")
 
@@ -427,19 +420,18 @@ if df is not None:
         if detected:
             detected = list(dict.fromkeys(detected))
             
-            # Instruction pour l'utilisateur
-            st.markdown("""
-            <div class='print-instruction no-print'>
-                🖨️ <b>Pour imprimer :</b> Faites <b>Ctrl+P</b> (ou Cmd+P).<br>
-                Dans la fenêtre d'impression, assurez-vous de cocher <b>"Graphiques d'arrière-plan"</b> 
-                et choisissez <b>"Paysage"</b>. L'interface inutile disparaîtra automatiquement.
-            </div>
-            """, unsafe_allow_html=True)
-
             st.success(f"✅ {len(detected)} dispositif(s) identifié(s)")
             
             # Injection du HTML
             st.markdown(render_html_table(detected, row, date_crea), unsafe_allow_html=True)
+            
+            st.markdown("""
+            <div class='print-instruction no-print'>
+                💡 <b>POUR IMPRIMER (A4 Paysage) :</b><br>
+                Appuyez sur <b>Ctrl+P</b>. Assurez-vous de cocher <b>"Graphiques d'arrière-plan"</b> dans les paramètres d'impression.
+                La page se nettoiera automatiquement.
+            </div>
+            """, unsafe_allow_html=True)
             
             if "ZFU" in detected or "QPV" in detected:
                 st.warning("⚠️ **Vigilance (ZFU / QPV)** : Éligibilité conditionnée à l'adresse exacte.")
