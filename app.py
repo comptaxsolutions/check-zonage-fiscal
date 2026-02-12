@@ -3,21 +3,20 @@ import pandas as pd
 from datetime import date
 
 # ==============================================================================
-# 1. CONFIGURATION & DESIGN (CSS "OVERLAY" POUR IMPRESSION)
+# 1. CONFIGURATION & DESIGN
 # ==============================================================================
 st.set_page_config(
-    page_title="Audit Zonage Fiscal",
+    page_title="Vérification zonage fiscal",
     page_icon="🦁",
     layout="wide"
 )
 
 st.markdown("""
     <style>
-    /* --- 1. DESIGN ÉCRAN (Joli et Moderne) --- */
+    /* --- 1. DESIGN ÉCRAN --- */
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
     
-    .main-title { font-size: 2em; color: #2c3e50; text-align: center; margin-bottom: 5px; font-weight: bold; }
-    .sub-title { font-size: 1.1em; color: #555; text-align: center; margin-bottom: 20px; }
+    .main-title { font-size: 2em; color: #2c3e50; text-align: center; margin-bottom: 20px; font-weight: bold; }
 
     table {
         width: 100%;
@@ -65,7 +64,7 @@ st.markdown("""
         border-bottom: 2px solid #2e7d32;
     }
 
-    /* Boutons Liens */
+    /* Boutons Liens Légifrance (Rose) */
     .btn-legifrance {
         background-color: #fce4ec;
         color: #c2185b;
@@ -76,21 +75,28 @@ st.markdown("""
         border: 1px solid #f8bbd0;
         font-size: 0.85em;
         white-space: nowrap;
+        display: inline-block;
+    }
+    
+    /* Boutons Documentation (Bleu) */
+    .btn-doc {
+        background-color: #e3f2fd;
+        color: #1565c0;
+        padding: 5px 10px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: bold;
+        border: 1px solid #bbdefb;
+        font-size: 0.85em;
+        white-space: nowrap;
+        display: inline-block;
     }
 
-    /* --- 2. DESIGN IMPRESSION (La méthode Radicale) --- */
+    /* --- 2. DESIGN IMPRESSION (Overlay Method) --- */
     @media print {
-        /* Cacher TOUT le corps de la page par défaut */
-        body * {
-            visibility: hidden;
-        }
-
-        /* Isoler la zone imprimable et la rendre visible */
-        #printable-area, #printable-area * {
-            visibility: visible;
-        }
-
-        /* Positionner la zone imprimable par-dessus tout le reste */
+        body * { visibility: hidden; }
+        #printable-area, #printable-area * { visibility: visible; }
+        
         #printable-area {
             position: fixed;
             left: 0;
@@ -99,32 +105,27 @@ st.markdown("""
             height: 100vh;
             margin: 0;
             padding: 20px;
-            background-color: white; /* Fond blanc forcé */
-            z-index: 9999; /* Au-dessus de tout */
+            background-color: white;
+            z-index: 9999;
         }
         
-        /* Force Paysage */
-        @page {
-            size: A4 landscape;
-            margin: 1cm;
-        }
+        @page { size: A4 landscape; margin: 1cm; }
 
-        /* Ajustements du tableau pour l'impression */
         table {
             width: 100% !important;
-            font-size: 9pt !important; /* Réduire un peu la police */
+            font-size: 9pt !important;
             border: 2px solid #000;
         }
         
         th {
             background-color: #2c3e50 !important;
             color: white !important;
-            -webkit-print-color-adjust: exact; /* Force la couleur de fond */
+            -webkit-print-color-adjust: exact; 
             print-color-adjust: exact;
         }
         
-        /* Les liens deviennent du texte noir souligné */
-        .btn-legifrance {
+        /* Transformation des boutons en liens texte pour l'impression */
+        .btn-legifrance, .btn-doc {
             border: none;
             background: none !important;
             color: black !important;
@@ -132,10 +133,7 @@ st.markdown("""
             padding: 0;
         }
         
-        /* Cacher les éléments "no-print" */
-        .no-print {
-            display: none !important;
-        }
+        .no-print { display: none !important; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -191,7 +189,7 @@ def load_data():
         return None
 
 # ==============================================================================
-# 3. MATRICE DE DONNÉES (VALIDÉE 2030)
+# 3. MATRICE DE DONNÉES (AVEC LIENS DOCUMENTATION)
 # ==============================================================================
 DATA_MATRIX = {
     "ZFU": {
@@ -203,12 +201,13 @@ DATA_MATRIX = {
         "Social": "Exonération spécifique (L.131-4-2)", 
         "Nature_activite": "Industrielles, commerciales, artisanales, BNC.<br><i>Exclusions : crédit-bail mobilier, location logements + certaines activités particulières</i>",
         "Regime_fiscal": "Tout régime (micro ou réel)",
-        "Taille": "< 50 salariés, CA ≤ 10 M€. Capital < 25 % par grandes ent.",
+        "Taille": "< 50 salariés, CA ≤ 10 M€ ou bilan ≤ 10 M€. Capital non détenu ≥ 25 % par grandes entreprises",
         "Implantation": "Implantation matérielle et activité effective (locaux, clientèle, production) en ZFU. Possible non sédentarité sous conditions.",
         "Condition_sociale": "Obligation emploi % salariés résidant en ZFU ou QPV à compter du 2ème salarié",
         "Exclusions_abus": "Non éligible si transfert/restructuration simple, ou changement de forme sans nouveauté.",
         "Plafonds_UE": "Plafond spécifique (50 k€/an + 5k€/emploi).",
-        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/LEGIARTI000026939165/"
+        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/LEGIARTI000026939165/",
+        "Doc_Link": "https://les-aides.fr/aide/koT9/ddfip/zfu-te-zone-franche-urbaine-territoire-entrepreneur-exoneration-d-impots-sur-les-benefices.html"
     },
     
     "AFR": {
@@ -225,7 +224,8 @@ DATA_MATRIX = {
         "Condition_sociale": "3 salariés minimum si activité BNC",
         "Exclusions_abus": "Non éligible si extension d'activité existante (dépendance, franchise, etc.).",
         "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans).",
-        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000046003627/"
+        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000046003627/",
+        "Doc_Link": "https://les-aides.fr/aide/kzj9/ddfip/zafr-zone-d-aide-a-finalite-regionale-exoneration-d-impot-sur-les-benefices.html"
     },
 
     "ZFRR_CLASSIC": {
@@ -242,7 +242,8 @@ DATA_MATRIX = {
         "Condition_sociale": "cf taille entreprise",
         "Exclusions_abus": "Non éligible si activité déjà exonérée dans les 5 ans (ZFU, ZAFR, BER…), ou reprise intra-familiale (sauf 1ère reprise par descendant).",
         "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans).",
-        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000049746820/"
+        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000049746820/",
+        "Doc_Link": "https://les-aides.fr/aide/cUFf3w/ddfip/frr-exoneration-d-impot-sur-les-benefices.html"
     },
     
     "ZFRR_PLUS": {
@@ -259,7 +260,8 @@ DATA_MATRIX = {
         "Condition_sociale": "cf taille entreprise",
         "Exclusions_abus": "Non éligible si activité déjà exonérée dans les 5 ans (ZFU, ZAFR, BER…), ou reprise intra-familiale (sauf 1ère reprise par descendant).",
         "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans).",
-        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000051871914/"
+        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000051871914/",
+        "Doc_Link": "https://les-aides.fr/aide/cUFf3w/ddfip/frr-exoneration-d-impot-sur-les-benefices.html"
     },
 
     "QPV": {
@@ -276,7 +278,8 @@ DATA_MATRIX = {
         "Condition_sociale": "N/C",
         "Exclusions_abus": "N/C",
         "Plafonds_UE": "N/C",
-        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000048707389/"
+        "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000048707389/",
+        "Doc_Link": None # Pas de lien fourni pour QPV
     }
 }
 
@@ -312,10 +315,10 @@ def render_html_table(regimes, row_data, date_op):
         ("Règles UE / plafonds d'aides", "Plafonds_UE")
     ]
 
-    # CONTENEUR SPECIAL POUR L'IMPRESSION (ID=printable-area)
+    # Conteneur imprimable "Overlay"
     html = f"""
     <div id='printable-area'>
-        <div class='main-title'>Audit Zonage Fiscal</div>
+        <div class='main-title'>Vérification zonage fiscal</div>
         <div class='sub-title'>
             Commune : <b>{row_data['COMMUNE']}</b> (Code: {row_data['CODE']}) | 
             Date opération : {date_op.strftime('%d/%m/%Y')}
@@ -328,13 +331,23 @@ def render_html_table(regimes, row_data, date_op):
         html += f"<th>{DATA_MATRIX[r]['Nom']}</th>"
     html += "</tr></thead><tbody>"
     
-    # LIGNE ZONE
+    # 1. ZONE
     html += "<tr class='zone-row'><td>ZONE / CLASSEMENT</td>"
     for r in regimes:
         html += f"<td>{get_zone_display(r, row_data)}</td>"
     html += "</tr>"
     
-    # LIGNE LIENS
+    # 2. DOCUMENTATION (Nouvelle Ligne)
+    html += "<tr><td>DOCUMENTATION</td>"
+    for r in regimes:
+        doc_url = DATA_MATRIX[r].get("Doc_Link")
+        if doc_url:
+            html += f'<td><a href="{doc_url}" target="_blank" class="btn-doc">Fiche Pratique 📘</a></td>'
+        else:
+            html += "<td>-</td>"
+    html += "</tr>"
+    
+    # 3. VERIFICATION SOURCE
     date_formatted = date_op.strftime("%Y-%m-%d")
     html += "<tr><td>VÉRIFICATION SOURCE</td>"
     for r in regimes:
@@ -346,7 +359,7 @@ def render_html_table(regimes, row_data, date_op):
             html += "<td>-</td>"
     html += "</tr>"
 
-    # CORPS DU TABLEAU
+    # 4. LE RESTE DU TABLEAU
     for label, key in rows_config:
         html += f"<tr><td>{label}</td>"
         for r in regimes:
@@ -363,19 +376,20 @@ def render_html_table(regimes, row_data, date_op):
 # ==============================================================================
 df = load_data()
 
-st.markdown("<h1 style='text-align: center; color: #2c3e50;'>Audit Zonage Fiscal</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #7f8c8d;'>Outil d'aide à la décision (Hauts-de-France)</p>", unsafe_allow_html=True)
-st.write("---")
+st.markdown("<h1 class='main-title'>Vérification zonage fiscal</h1>", unsafe_allow_html=True)
 
 if df is not None:
-    # Conteneur pour inputs (sera caché à l'impression)
+    # INPUTS (Non imprimables)
     with st.container():
         st.markdown('<div class="no-print">', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
             choix_commune = st.selectbox("📍 Commune", df['Label_Recherche'], index=None, placeholder="Rechercher...")
         with c2:
-            date_crea = st.date_input("📅 Date de l'opération", date.today(), format="DD/MM/YYYY")
+            # Blocage date avant 01/01/2025
+            date_crea = st.date_input("📅 Date de l'opération", date.today(), 
+                                      min_value=date(2025, 1, 1), 
+                                      format="DD/MM/YYYY")
         st.markdown('</div>', unsafe_allow_html=True)
 
     if choix_commune:
@@ -422,17 +436,16 @@ if df is not None:
             
             st.success(f"✅ {len(detected)} dispositif(s) identifié(s)")
             
-            # Injection du HTML
+            # Injection du Tableau
             st.markdown(render_html_table(detected, row, date_crea), unsafe_allow_html=True)
             
+            # Instruction Impression
             st.markdown("""
-            <div class='print-instruction no-print'>
-                💡 <b>POUR IMPRIMER (A4 Paysage) :</b><br>
-                Appuyez sur <b>Ctrl+P</b>. Assurez-vous de cocher <b>"Graphiques d'arrière-plan"</b> dans les paramètres d'impression.
-                La page se nettoiera automatiquement.
+            <div class='no-print' style='text-align:center; margin-top:20px; color:#666;'>
+                <small>Pour imprimer, faites <b>Ctrl+P</b>. Cochez "Graphiques d'arrière-plan" pour voir les couleurs.</small>
             </div>
             """, unsafe_allow_html=True)
-            
+
             if "ZFU" in detected or "QPV" in detected:
                 st.warning("⚠️ **Vigilance (ZFU / QPV)** : Éligibilité conditionnée à l'adresse exacte.")
         else:
