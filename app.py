@@ -7,7 +7,7 @@ from datetime import date
 # ==============================================================================
 st.set_page_config(
     page_title="Vérification zonage fiscal",
-    page_icon="📍",
+    page_icon="🦁",
     layout="wide"
 )
 
@@ -46,13 +46,13 @@ st.markdown("""
         line-height: 1.4;
     }
 
-    /* Colonne des titres à gauche : LARGEUR ADAPTÉE AU CONTENU */
+    /* Colonne des titres à gauche : LARGEUR ADAPTÉE */
     td:first-child {
         background-color: #f8f9fa;
         font-weight: 700;
         color: #2c3e50;
-        width: 1%;            /* Astuce pour réduire à la taille minimale du contenu */
-        white-space: nowrap;  /* Empêche le texte de passer à la ligne */
+        width: 1%;
+        white-space: nowrap;
         padding-right: 20px;
     }
     
@@ -66,7 +66,7 @@ st.markdown("""
         border-bottom: 2px solid #2e7d32;
     }
 
-    /* Boutons Liens (Rose) */
+    /* Boutons Liens */
     .btn-legifrance {
         background-color: #fce4ec;
         color: #c2185b;
@@ -78,10 +78,9 @@ st.markdown("""
         font-size: 0.8em;
         white-space: nowrap;
         display: inline-block;
-        margin-bottom: 4px; /* Espacement entre les boutons */
+        margin-bottom: 4px;
     }
     
-    /* Boutons Article CGI (Violet clair pour distinguer) */
     .btn-cgi {
         background-color: #f3e5f5;
         color: #7b1fa2;
@@ -95,7 +94,6 @@ st.markdown("""
         display: inline-block;
     }
     
-    /* Boutons Documentation (Bleu) */
     .btn-doc {
         background-color: #e3f2fd;
         color: #1565c0;
@@ -141,7 +139,6 @@ st.markdown("""
             print-color-adjust: exact;
         }
         
-        /* Transformation des boutons en liens texte pour l'impression */
         .btn-legifrance, .btn-doc, .btn-cgi {
             border: none;
             background: none !important;
@@ -207,7 +204,7 @@ def load_data():
         return None
 
 # ==============================================================================
-# 3. MATRICE DE DONNÉES (URLS MISES A JOUR)
+# 3. MATRICE DE DONNÉES
 # ==============================================================================
 DATA_MATRIX = {
     "ZFU": {
@@ -291,8 +288,8 @@ DATA_MATRIX = {
         "References_legales": "Décret n° 2023-1314",
         "Periode": "Créations jusqu'au <b>31/12/2030</b><br><i>(en attente promulgation LF2026)</i>",
         "Duree_exo": "N/C",
-        "Impots_locaux": "exonération TFPB 5 ans sauf délibération contraire collectivité",
-        "Social": "nan",
+        "Impots_locaux": "Exo TFPB 5 ans sauf délibération.",
+        "Social": "Non",
         "Nature_activite": "N/C",
         "Regime_fiscal": "N/C",
         "Taille": "N/C",
@@ -315,7 +312,7 @@ def get_zone_display(regime_key, row_data):
     elif regime_key == "AFR": raw_val = str(row_data.get('AFR', '')).strip()
     elif "ZFRR" in regime_key: raw_val = str(row_data.get('FRR', '')).strip()
 
-    if raw_val.lower() in ['nan', '0', '', 'non']: return "-"
+    if raw_val.lower() in ['nan', '0', '', 'non', '-']: return "-"
     if raw_val.lower() == "oui": return "Intégralement"
     elif "partiel" in raw_val.lower(): return "Partiellement"
     elif "maintenue" in raw_val.lower(): return "ZRR maintenue"
@@ -337,11 +334,16 @@ def render_html_table(regimes, row_data, date_op):
         ("Règles UE / plafonds d'aides", "Plafonds_UE")
     ]
 
+    # Titre dynamique selon le mode (Commune vs Référence)
+    commune_info = f"Commune : <b>{row_data['COMMUNE']}</b> (Code: {row_data['CODE']})"
+    if row_data['COMMUNE'] == "MODE RÉFÉRENCE":
+        commune_info = "<b>MODE RÉFÉRENCE (Tous dispositifs)</b>"
+
     html = f"""
     <div id='printable-area'>
         <div class='main-title'>Vérification zonage fiscal</div>
         <div class='sub-title'>
-            Commune : <b>{row_data['COMMUNE']}</b> (Code: {row_data['CODE']}) | 
+            {commune_info} | 
             Date opération : {date_op.strftime('%d/%m/%Y')}
         </div>
         <table>
@@ -374,26 +376,25 @@ def render_html_table(regimes, row_data, date_op):
     for r in regimes:
         cell_content = ""
         
-        # Bouton 1: Texte de base (Legifrance Base)
+        # Bouton 1: Texte de base
         base_url = DATA_MATRIX[r].get("Legifrance_Base")
         if base_url:
             full_link = f"{base_url}{date_formatted}"
-            cell_content += f'<a href="{full_link}" target="_blank" class="btn-legifrance">Lien vers liste communes 🔗</a><br>'
+            cell_content += f'<a href="{full_link}" target="_blank" class="btn-legifrance">Texte à date 🔗</a><br>'
         
-        # Bouton 2: Article spécifique (Legifrance Article)
+        # Bouton 2: Article spécifique
         article_url = DATA_MATRIX[r].get("Legifrance_Article")
         ref_text = DATA_MATRIX[r].get("References_legales")
         # On nettoie le texte de la référence pour le bouton
+        clean_ref = "Article Loi"
         if ref_text:
-            clean_ref = ref_text.split("<br>")[0] # Prend juste le début "CGI art..."
+            clean_ref = ref_text.split("<br>")[0]
         
         if article_url:
             full_article_link = f"{article_url}{date_formatted}"
             cell_content += f'<a href="{full_article_link}" target="_blank" class="btn-cgi">{clean_ref}</a>'
             
-        if not cell_content:
-            cell_content = "-"
-            
+        if not cell_content: cell_content = "-"
         html += f"<td>{cell_content}</td>"
     html += "</tr>"
 
@@ -412,6 +413,13 @@ def render_html_table(regimes, row_data, date_op):
 # ==============================================================================
 # 5. MOTEUR D'ANALYSE
 # ==============================================================================
+# Gestion état bouton "Tout afficher"
+if 'show_all_mode' not in st.session_state:
+    st.session_state.show_all_mode = False
+
+def toggle_mode():
+    st.session_state.show_all_mode = not st.session_state.show_all_mode
+
 df = load_data()
 
 st.markdown("<h1 class='main-title'>Vérification zonage fiscal</h1>", unsafe_allow_html=True)
@@ -420,20 +428,38 @@ if df is not None:
     # INPUTS
     with st.container():
         st.markdown('<div class="no-print">', unsafe_allow_html=True)
+        
+        # ALERTE
+        st.warning("⚠️ Attention : La base de données est en cours de constitution. Toutes les communes ne sont pas encore référencées.")
+        
         c1, c2 = st.columns(2)
         with c1:
-            choix_commune = st.selectbox("📍 Commune", df['Label_Recherche'], index=None, placeholder="Rechercher...")
+            choix_commune = st.selectbox("📍 Sélectionner une commune", df['Label_Recherche'], index=None, placeholder="Rechercher...")
         with c2:
             date_crea = st.date_input("📅 Date de l'opération", date.today(), 
                                       min_value=date(2025, 1, 1), 
                                       format="DD/MM/YYYY")
+        
+        # BOUTON MODE RÉFÉRENCE
+        btn_label = "📖 Masquer le comparatif complet" if st.session_state.show_all_mode else "📖 Afficher tous les dispositifs (Mode Référence)"
+        st.button(btn_label, on_click=toggle_mode, type="secondary")
+        
         st.markdown('</div>', unsafe_allow_html=True)
 
-    if choix_commune:
+    # LOGIQUE D'AFFICHAGE
+    row_to_display = None
+    regimes_to_display = []
+
+    # CAS 1 : MODE RÉFÉRENCE ACTIVÉ
+    if st.session_state.show_all_mode:
+        regimes_to_display = list(DATA_MATRIX.keys())
+        # Dummy row pour l'affichage générique
+        row_to_display = {'COMMUNE': 'MODE RÉFÉRENCE', 'CODE': '-', 'NB_ZFU': '-', 'NB_QPV': '-', 'AFR': '-', 'FRR': '-'}
+    
+    # CAS 2 : COMMUNE SÉLECTIONNÉE
+    elif choix_commune:
         row = df[df['Label_Recherche'] == choix_commune].iloc[0]
-        st.divider()
-        
-        detected = []
+        row_to_display = row
         
         # 1. ZFRR
         frr_val = str(row.get('FRR', '')).strip().upper()
@@ -441,40 +467,43 @@ if df is not None:
         DATE_ZFRR_CLASSIC = date(2024, 7, 1)
         if frr_val in ['FRR', 'FRR+', 'ZRR MAINTENUE', 'OUI']:
             if date_crea >= DATE_ZFRR_PLUS and ("+" in frr_val or "FRR+" in frr_val):
-                detected.append("ZFRR_PLUS")
+                regimes_to_display.append("ZFRR_PLUS")
             elif date_crea >= DATE_ZFRR_CLASSIC:
-                detected.append("ZFRR_CLASSIC")
+                regimes_to_display.append("ZFRR_CLASSIC")
             else:
-                detected.append("ZFRR_CLASSIC")
+                regimes_to_display.append("ZFRR_CLASSIC")
 
         # 2. ZFU
         nb_zfu = str(row.get('NB_ZFU', '0')).strip()
         is_zfu = False
         if nb_zfu not in ['0', 'nan', 'NON', '', 'Non']: is_zfu = True
         if is_zfu and date_crea <= date(2030, 12, 31):
-            detected.append("ZFU")
+            regimes_to_display.append("ZFU")
 
         # 3. AFR
         afr_val = str(row.get('AFR', '')).strip().capitalize()
         if afr_val in ['Integralement', 'Partiellement', 'Oui', 'Intégralement']:
              if date_crea <= date(2027, 12, 31):
-                detected.append("AFR")
+                regimes_to_display.append("AFR")
         
         # 4. QPV
         nb_qpv = str(row.get('NB_QPV', '0')).strip()
         is_qpv = False
         if nb_qpv not in ['0', 'nan', 'NON', '', 'Non']: is_qpv = True
         if is_qpv and date_crea <= date(2030, 12, 31):
-            detected.append("QPV")
+            regimes_to_display.append("QPV")
 
-        # AFFICHAGE
-        if detected:
-            detected = list(dict.fromkeys(detected))
+    # RENDER FINAL
+    if row_to_display:
+        st.divider()
+        if regimes_to_display:
+            # On dédoublonne
+            regimes_to_display = list(dict.fromkeys(regimes_to_display))
             
-            st.success(f"✅ {len(detected)} dispositif(s) identifié(s)")
+            if not st.session_state.show_all_mode:
+                st.success(f"✅ {len(regimes_to_display)} dispositif(s) identifié(s)")
             
-            # Injection Tableau
-            st.markdown(render_html_table(detected, row, date_crea), unsafe_allow_html=True)
+            st.markdown(render_html_table(regimes_to_display, row_to_display, date_crea), unsafe_allow_html=True)
             
             st.markdown("""
             <div class='no-print' style='text-align:center; margin-top:20px; color:#666;'>
@@ -482,13 +511,10 @@ if df is not None:
             </div>
             """, unsafe_allow_html=True)
 
-            if "ZFU" in detected or "QPV" in detected:
+            if ("ZFU" in regimes_to_display or "QPV" in regimes_to_display) and not st.session_state.show_all_mode:
                 st.warning("⚠️ **Vigilance (ZFU / QPV)** : Éligibilité conditionnée à l'adresse exacte.")
         else:
-            st.warning("Aucun dispositif zoné majeur détecté.")
+            st.warning("Aucun dispositif zoné majeur détecté pour cette commune.")
 
 else:
     st.error("Erreur chargement Google Sheet.")
-
-
-
