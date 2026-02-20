@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import datetime
 from datetime import date
 
 # ==============================================================================
@@ -209,22 +210,61 @@ def load_matrix():
         url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID_MATRICE}/export?format=csv"
         df = pd.read_csv(url, dtype=str)
         
-        # Sécurisation : on vérifie que la colonne ID_CRITERE existe bien
         if "ID_CRITERE" not in df.columns:
             return None
             
         df = df.set_index("ID_CRITERE")
-        df = df.fillna("") # Remplace les NaN par du vide
+        df = df.fillna("") 
         return df.to_dict()
     except Exception as e:
-        return None # Renvoie None en cas d'erreur ou d'inaccessibilité
+        return None 
 
 # ==============================================================================
-# 4. GÉNÉRATEUR HTML DU TABLEAU
+# 4. MOTEUR DE VÉRIFICATION DYNAMIQUE DES DATES
+# ==============================================================================
+def is_eligible_by_date(regime_key, date_op, matrix):
+    """Vérifie si la date de l'opération est dans les clous du dispositif"""
+    if regime_key not in matrix:
+        return False
+        
+    start_str = str(matrix[regime_key].get("Date_debut", "")).strip()
+    end_str = str(matrix[regime_key].get("Date_fin", "")).strip()
+    
+    # Par défaut, si rien n'est renseigné, c'est toujours bon
+    start_d = date.min
+    end_d = date.max
+    
+    def parse_d(d_str):
+        if not d_str or d_str.lower() in ['nan', 'null', '']: return None
+        try:
+            # Tente le format YYYY-MM-DD
+            if "-" in d_str: return date.fromisoformat(d_str)
+            # Tente le format DD/MM/YYYY
+            elif "/" in d_str: return datetime.datetime.strptime(d_str, "%d/%m/%Y").date()
+        except: pass
+        return None
+        
+    parsed_start = parse_d(start_str)
+    if parsed_start: start_d = parsed_start
+    
+    parsed_end = parse_d(end_str)
+    if parsed_end: end_d = parsed_end
+    
+    return start_d <= date_op <= end_d
+
+# ==============================================================================
+# 5. GÉNÉRATEUR HTML DU TABLEAU
 # ==============================================================================
 def get_zone_display(regime_key, row_data):
+    # Logique de récupération de la valeur brute
     raw_val = ""
-    if regime_key == "ZFU": raw_val = str(row_data.get('NB_ZFU', '')).strip()
+    # Gestion du QPV_2026 qui lit les mêmes colonnes géographiques
+    if regime_key == "ZFU" or regime_key == "QPV_2026": 
+        raw_val = str(row_data.get('NB_ZFU', '')).strip()
+        # Si la commune est QPV, elle est aussi éligible au nouveau QPV_2026
+        if raw_val.lower() in ['0', 'nan', 'non', '', '-']:
+            raw_val = str(row_data.get('NB_QPV', '')).strip()
+            
     elif regime_key == "QPV": raw_val = str(row_data.get('NB_QPV', '')).strip()
     elif regime_key == "AFR": raw_val = str(row_data.get('AFR', '')).strip()
     elif "ZFRR" in regime_key: raw_val = str(row_data.get('FRR', '')).strip()
@@ -238,7 +278,7 @@ def get_zone_display(regime_key, row_data):
 def render_html_table(regimes, row_data, date_op, data_matrix):
     rows_config = [
         ("Références légales", "References_legales"),
-        ("Période d'application", "Periode"),
+        ("Période d'application", "Periode"), # On affiche "Periode" pour l'humain
         ("Durée exonération IR/IS", "Duree_exo"),
         ("Impôts locaux (CFE / TFPB)", "Impots_locaux"),
         ("Exonérations sociales", "Social"),
@@ -322,7 +362,7 @@ def render_html_table(regimes, row_data, date_op, data_matrix):
     return html
 
 # ==============================================================================
-# 5. MOTEUR D'ANALYSE
+# 6. MOTEUR D'ANALYSE
 # ==============================================================================
 if 'show_all_mode' not in st.session_state:
     st.session_state.show_all_mode = False
@@ -337,13 +377,12 @@ st.markdown("<h1 class='main-title'>Vérification zonage fiscal</h1>", unsafe_al
 
 # GESTION D'ERREUR MATRICE EXTERNE
 if DATA_MATRIX is None or not DATA_MATRIX:
-    st.error("⚠️ Attention : Les données sources sont en cours de révision. L'application est momentanément indisponible.")
-    st.stop() # Bloque l'exécution du reste du code
+    st.error("⚠️ Attention : Les données sources de législation sont en cours de révision. L'application est momentanément indisponible.")
+    st.stop() 
 
 if df is not None:
     with st.container():
         st.markdown('<div class="no-print">', unsafe_allow_html=True)
-        
         st.warning("⚠️ Attention : La base de données est en cours de constitution. Toutes les communes ne sont pas encore référencées.")
         
         c1, c2 = st.columns(2)
@@ -356,45 +395,53 @@ if df is not None:
         
         btn_label = "📖 Masquer le comparatif complet" if st.session_state.show_all_mode else "📖 Afficher tous les dispositifs (Mode Référence)"
         st.button(btn_label, on_click=toggle_mode, type="secondary")
-        
         st.markdown('</div>', unsafe_allow_html=True)
 
     row_to_display = None
     regimes_to_display = []
 
     if st.session_state.show_all_mode:
-        regimes_to_display = list(DATA_MATRIX.keys())
+        # Affiche tout ce qui est éligible À CETTE DATE
+        for r_key in DATA_MATRIX.keys():
+            if is_eligible_by_date(r_key, date_crea, DATA_MATRIX):
+                regimes_to_display.append(r_key)
         row_to_display = {'COMMUNE': 'MODE RÉFÉRENCE', 'CODE': '-', 'NB_ZFU': '-', 'NB_QPV': '-', 'AFR': '-', 'FRR': '-'}
     
     elif choix_commune:
         row = df[df['Label_Recherche'] == choix_commune].iloc[0]
         row_to_display = row
         
+        # 1. ZFRR
         frr_val = str(row.get('FRR', '')).strip().upper()
-        DATE_ZFRR_PLUS = date(2025, 1, 1)
-        DATE_ZFRR_CLASSIC = date(2024, 7, 1)
         if frr_val in ['FRR', 'FRR+', 'ZRR MAINTENUE', 'OUI']:
-            if date_crea >= DATE_ZFRR_PLUS and ("+" in frr_val or "FRR+" in frr_val):
-                if "ZFRR_PLUS" in DATA_MATRIX: regimes_to_display.append("ZFRR_PLUS")
-            elif date_crea >= DATE_ZFRR_CLASSIC:
-                if "ZFRR_CLASSIC" in DATA_MATRIX: regimes_to_display.append("ZFRR_CLASSIC")
-            else:
-                if "ZFRR_CLASSIC" in DATA_MATRIX: regimes_to_display.append("ZFRR_CLASSIC")
+            if ("+" in frr_val or "FRR+" in frr_val) and is_eligible_by_date("ZFRR_PLUS", date_crea, DATA_MATRIX):
+                regimes_to_display.append("ZFRR_PLUS")
+            elif is_eligible_by_date("ZFRR_CLASSIC", date_crea, DATA_MATRIX):
+                regimes_to_display.append("ZFRR_CLASSIC")
 
+        # 2. ZFU (Ancien)
         nb_zfu = str(row.get('NB_ZFU', '0')).strip()
-        if nb_zfu not in ['0', 'nan', 'NON', '', 'Non']: 
-            if date_crea <= date(2030, 12, 31):
-                if "ZFU" in DATA_MATRIX: regimes_to_display.append("ZFU")
+        is_zfu = False
+        if nb_zfu not in ['0', 'nan', 'NON', '', 'Non', '-']: is_zfu = True
+        if is_zfu and is_eligible_by_date("ZFU", date_crea, DATA_MATRIX):
+            regimes_to_display.append("ZFU")
 
+        # 3. AFR
         afr_val = str(row.get('AFR', '')).strip().capitalize()
         if afr_val in ['Integralement', 'Partiellement', 'Oui', 'Intégralement']:
-             if date_crea <= date(2027, 12, 31):
-                if "AFR" in DATA_MATRIX: regimes_to_display.append("AFR")
+             if is_eligible_by_date("AFR", date_crea, DATA_MATRIX):
+                regimes_to_display.append("AFR")
         
+        # 4. QPV (Ancien)
         nb_qpv = str(row.get('NB_QPV', '0')).strip()
-        if nb_qpv not in ['0', 'nan', 'NON', '', 'Non']: 
-            if date_crea <= date(2030, 12, 31):
-                if "QPV" in DATA_MATRIX: regimes_to_display.append("QPV")
+        is_qpv = False
+        if nb_qpv not in ['0', 'nan', 'NON', '', 'Non', '-']: is_qpv = True
+        if is_qpv and is_eligible_by_date("QPV", date_crea, DATA_MATRIX):
+            regimes_to_display.append("QPV")
+            
+        # 5. QPV_2026 (Nouveau régime unifié - S'active si la ville est ZFU ou QPV)
+        if (is_zfu or is_qpv) and is_eligible_by_date("QPV_2026", date_crea, DATA_MATRIX):
+            regimes_to_display.append("QPV_2026")
 
     if row_to_display is not None:
         st.divider()
@@ -402,9 +449,8 @@ if df is not None:
             regimes_to_display = list(dict.fromkeys(regimes_to_display))
             
             if not st.session_state.show_all_mode:
-                st.success(f"✅ {len(regimes_to_display)} dispositif(s) identifié(s)")
+                st.success(f"✅ {len(regimes_to_display)} dispositif(s) identifié(s) à la date du {date_crea.strftime('%d/%m/%Y')}")
             
-            # On passe explicitement DATA_MATRIX au render_html_table
             st.markdown(render_html_table(regimes_to_display, row_to_display, date_crea, DATA_MATRIX), unsafe_allow_html=True)
             
             st.markdown("""
@@ -413,10 +459,10 @@ if df is not None:
             </div>
             """, unsafe_allow_html=True)
 
-            if ("ZFU" in regimes_to_display or "QPV" in regimes_to_display) and not st.session_state.show_all_mode:
+            if ("ZFU" in regimes_to_display or "QPV" in regimes_to_display or "QPV_2026" in regimes_to_display) and not st.session_state.show_all_mode:
                 st.warning("⚠️ **Vigilance (ZFU / QPV)** : Éligibilité conditionnée à l'adresse exacte.")
         else:
-            st.warning("Aucun dispositif zoné majeur détecté pour cette commune.")
+            st.warning(f"Aucun dispositif zoné majeur détecté pour cette commune à la date du {date_crea.strftime('%d/%m/%Y')}.")
 
 else:
     st.error("Erreur de chargement de la base des communes.")
