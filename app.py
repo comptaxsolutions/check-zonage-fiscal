@@ -200,119 +200,24 @@ def load_data():
         return None
 
 # ==============================================================================
-# 3. CHARGEMENT DE LA MATRICE (BASE EXTERNE)
+# 3. CHARGEMENT DE LA MATRICE (BASE EXTERNE EXCLUSIVE)
 # ==============================================================================
 @st.cache_data(ttl=600)
 def load_matrix():
-    # 👇👇👇 INSÉREZ ICI L'ID DU NOUVEAU GOOGLE SHEET MATRICE 👇👇👇
     SHEET_ID_MATRICE = "1pD6AJViuY1PRWYLJh3K9Xlpc_ngsVqeK1ljRJgmvKX0" 
-
-    if SHEET_ID_MATRICE:
-        try:
-            url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID_MATRICE}/export?format=csv"
-            df = pd.read_csv(url, dtype=str)
-            df = df.set_index("ID_CRITERE")
-            df = df.fillna("") # Remplace les NaN par du vide
-            return df.to_dict()
-        except Exception as e:
-            st.warning("Impossible de lire le fichier Matrice Google Sheet. Utilisation des données de secours.")
-
-    # --------------------------------------------------------------------------
-    # DONNÉES DE SECOURS (Si aucun ID renseigné ou si erreur de connexion)
-    # --------------------------------------------------------------------------
-    return {
-        "ZFU": {
-            "Nom": "ZFU-TE",
-            "References_legales": "CGI art. 44 octies A",
-            "Periode": "Créations jusqu'au <b>31/12/2030</b><br><i>(en attente promulgation LF2026)</i>",
-            "Duree_exo": "100 % 5 ans, puis 60 % (6e), 40 % (7e), 20 % (8e).",
-            "Impots_locaux": "Possible exonération sur délibération locale (totale puis progressive)",
-            "Social": "Exonération spécifique (L.131-4-2)", 
-            "Nature_activite": "Industrielles, commerciales, artisanales, BNC.<br><i>Exclusions : crédit-bail mobilier, location logements + certaines activités particulières</i>",
-            "Regime_fiscal": "Tout régime (micro ou réel)",
-            "Taille": "< 50 salariés, CA ≤ 10 M€. Capital < 25 % par grandes ent.",
-            "Implantation": "Implantation matérielle et activité effective (locaux, clientèle) en ZFU.",
-            "Condition_sociale": "Obligation emploi % salariés résidant en ZFU ou QPV à compter du 2ème salarié",
-            "Exclusions_abus": "Non éligible si transfert/restructuration simple, ou changement de forme sans nouveauté.",
-            "Plafonds_UE": "Plafond spécifique (50 k€/an + 5k€/emploi).",
-            "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/LEGIARTI000026939165/",
-            "Legifrance_Article": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051217764/",
-            "Doc_Link": "https://les-aides.fr/aide/koT9/ddfip/zfu-te-zone-franche-urbaine-territoire-entrepreneur-exoneration-d-impots-sur-les-benefices.html"
-        },
-        "AFR": {
-            "Nom": "ZAFR (Zones AFR)",
-            "References_legales": "CGI art. 44 sexies",
-            "Periode": "Créations jusqu'au 31/12/2027",
-            "Duree_exo": "100 % 2 ans, puis 75 % (3e), 50 % (4e), 25 % (5e).",
-            "Impots_locaux": "Possible exonération sur délibération locale",
-            "Social": "Non",
-            "Nature_activite": "Industrielles, commerciales, artisanales, activités BNC exercées en société IS avec ≥ 3 salariés).<br><i>Exclusion activités particulières</i>",
-            "Regime_fiscal": "Régime réel obligatoire",
-            "Taille": "Pas de seuil général. Condition capital : pas détenu > 50 % par d'autres sociétés.",
-            "Implantation": "Siège + moyens en zone. Activité non sédentaire : ≥ 85 % du CA en zone (sinon prorata limité).",
-            "Condition_sociale": "3 salariés minimum si activité BNC",
-            "Exclusions_abus": "Non éligible si extension d'activité existante (dépendance, franchise, etc.).",
-            "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans).",
-            "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000046003627/",
-            "Legifrance_Article": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000048846371/",
-            "Doc_Link": "https://les-aides.fr/aide/kzj9/ddfip/zafr-zone-d-aide-a-finalite-regionale-exoneration-d-impot-sur-les-benefices.html"
-        },
-        "ZFRR_CLASSIC": {
-            "Nom": "ZFRR (Classique)",
-            "References_legales": "CGI art. 44 quindecies A",
-            "Periode": "01/07/2024 – 31/12/2029",
-            "Duree_exo": "100 % 5 ans, puis 75 % (6e), 50 % (7e), 25 % (8e).",
-            "Impots_locaux": "Possible exonération sur délibération locale",
-            "Social": "Oui (cotisations patronales)",
-            "Nature_activite": "Industrielles, commerciales, artisanales, libérales.<br><i>Exclusion activités particulières</i>",
-            "Regime_fiscal": "Régime réel obligatoire",
-            "Taille": "< 11 salariés.<br><i>Pas de condition liée au capital mais demandé dans le modèle de rescrit</i>",
-            "Implantation": "Siège + moyens exclusivement en zone. Activité non sédentaire : CA hors zone ≤ 25 %.",
-            "Condition_sociale": "cf taille entreprise",
-            "Exclusions_abus": "Non éligible si activité déjà exonérée dans les 5 ans (ZFU, ZAFR, BER…), ou reprise intra-familiale.",
-            "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans).",
-            "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000049746820/",
-            "Legifrance_Article": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051217832/",
-            "Doc_Link": "https://les-aides.fr/aide/cUFf3w/ddfip/frr-exoneration-d-impot-sur-les-benefices.html"
-        },
-        "ZFRR_PLUS": {
-            "Nom": "ZFRR+ (Renforcée)",
-            "References_legales": "CGI art. 44 quindecies A",
-            "Periode": "01/01/2025 – 31/12/2029 + admet extensions d'établissement",
-            "Duree_exo": "100 % 5 ans, puis 75 % (6e), 50 % (7e), 25 % (8e).",
-            "Impots_locaux": "Possible exonération sur délibération locale",
-            "Social": "Oui (cotisations patronales)",
-            "Nature_activite": "Industrielles, commerciales, artisanales, libérales.<br><i>Exclusion activités particulières</i>",
-            "Regime_fiscal": "réel ou micro",
-            "Taille": "Création : PME UE. Reprise : < 11 salariés.",
-            "Implantation": "Pas d'exclusivité. Sédentaire : prorata de CA en zone. Non sédentaire : règle des 25 %.",
-            "Condition_sociale": "cf taille entreprise",
-            "Exclusions_abus": "Non éligible si activité déjà exonérée dans les 5 ans (ZFU, ZAFR, BER…), ou reprise intra-familiale.",
-            "Plafonds_UE": "Soumis aux plafonds 'de minimis' (300 k€ sur 3 ans).",
-            "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000051871914/",
-            "Legifrance_Article": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051217832/",
-            "Doc_Link": "https://les-aides.fr/aide/cUFf3w/ddfip/frr-exoneration-d-impot-sur-les-benefices.html"
-        },
-        "QPV": {
-            "Nom": "QPPV",
-            "References_legales": "Décret n° 2023-1314",
-            "Periode": "Créations jusqu'au <b>31/12/2030</b><br><i>(en attente promulgation LF2026)</i>",
-            "Duree_exo": "N/C",
-            "Impots_locaux": "exonération TFPB 5 ans sauf délibération",
-            "Social": "-",
-            "Nature_activite": "N/C",
-            "Regime_fiscal": "N/C",
-            "Taille": "N/C",
-            "Implantation": "N/C",
-            "Condition_sociale": "N/C",
-            "Exclusions_abus": "N/C",
-            "Plafonds_UE": "N/C",
-            "Legifrance_Base": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000048707389/",
-            "Doc_Link": ""
-        }
-    }
-
-DATA_MATRIX = load_matrix()
+    try:
+        url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID_MATRICE}/export?format=csv"
+        df = pd.read_csv(url, dtype=str)
+        
+        # Sécurisation : on vérifie que la colonne ID_CRITERE existe bien
+        if "ID_CRITERE" not in df.columns:
+            return None
+            
+        df = df.set_index("ID_CRITERE")
+        df = df.fillna("") # Remplace les NaN par du vide
+        return df.to_dict()
+    except Exception as e:
+        return None # Renvoie None en cas d'erreur ou d'inaccessibilité
 
 # ==============================================================================
 # 4. GÉNÉRATEUR HTML DU TABLEAU
@@ -330,7 +235,7 @@ def get_zone_display(regime_key, row_data):
     elif "maintenue" in raw_val.lower(): return "ZRR maintenue"
     else: return raw_val
 
-def render_html_table(regimes, row_data, date_op):
+def render_html_table(regimes, row_data, date_op, data_matrix):
     rows_config = [
         ("Références légales", "References_legales"),
         ("Période d'application", "Periode"),
@@ -362,7 +267,7 @@ def render_html_table(regimes, row_data, date_op):
     """
     
     for r in regimes:
-        html += f"<th>{DATA_MATRIX[r].get('Nom', '')}</th>"
+        html += f"<th>{data_matrix[r].get('Nom', '')}</th>"
     html += "</tr></thead><tbody>"
     
     # 1. ZONE
@@ -374,7 +279,7 @@ def render_html_table(regimes, row_data, date_op):
     # 2. DOCUMENTATION
     html += "<tr><td>DOCUMENTATION</td>"
     for r in regimes:
-        doc_url = DATA_MATRIX[r].get("Doc_Link", "")
+        doc_url = data_matrix[r].get("Doc_Link", "")
         if str(doc_url).strip() and str(doc_url) != "nan":
             html += f'<td><a href="{doc_url}" target="_blank" class="btn-doc">Fiche Pratique 📘</a></td>'
         else:
@@ -387,13 +292,13 @@ def render_html_table(regimes, row_data, date_op):
     for r in regimes:
         cell_content = ""
         
-        base_url = DATA_MATRIX[r].get("Legifrance_Base", "")
+        base_url = data_matrix[r].get("Legifrance_Base", "")
         if str(base_url).strip() and str(base_url) != "nan":
             full_link = f"{base_url}{date_formatted}"
             cell_content += f'<a href="{full_link}" target="_blank" class="btn-legifrance">Liste communes</a><br>'
         
-        article_url = DATA_MATRIX[r].get("Legifrance_Article", "")
-        ref_text = DATA_MATRIX[r].get("References_legales", "Article Loi")
+        article_url = data_matrix[r].get("Legifrance_Article", "")
+        ref_text = data_matrix[r].get("References_legales", "Article Loi")
         clean_ref = str(ref_text).split("<br>")[0] if ref_text else "Article Loi"
         
         if str(article_url).strip() and str(article_url) != "nan":
@@ -408,7 +313,7 @@ def render_html_table(regimes, row_data, date_op):
     for label, key in rows_config:
         html += f"<tr><td>{label}</td>"
         for r in regimes:
-            val = DATA_MATRIX[r].get(key, "-")
+            val = data_matrix[r].get(key, "-")
             if pd.isna(val) or val == "nan": val = ""
             html += f"<td>{val}</td>"
         html += "</tr>"
@@ -426,8 +331,14 @@ def toggle_mode():
     st.session_state.show_all_mode = not st.session_state.show_all_mode
 
 df = load_data()
+DATA_MATRIX = load_matrix()
 
 st.markdown("<h1 class='main-title'>Vérification zonage fiscal</h1>", unsafe_allow_html=True)
+
+# GESTION D'ERREUR MATRICE EXTERNE
+if DATA_MATRIX is None or not DATA_MATRIX:
+    st.error("⚠️ Attention : Les données sources sont en cours de révision. L'application est momentanément indisponible.")
+    st.stop() # Bloque l'exécution du reste du code
 
 if df is not None:
     with st.container():
@@ -464,26 +375,26 @@ if df is not None:
         DATE_ZFRR_CLASSIC = date(2024, 7, 1)
         if frr_val in ['FRR', 'FRR+', 'ZRR MAINTENUE', 'OUI']:
             if date_crea >= DATE_ZFRR_PLUS and ("+" in frr_val or "FRR+" in frr_val):
-                regimes_to_display.append("ZFRR_PLUS")
+                if "ZFRR_PLUS" in DATA_MATRIX: regimes_to_display.append("ZFRR_PLUS")
             elif date_crea >= DATE_ZFRR_CLASSIC:
-                regimes_to_display.append("ZFRR_CLASSIC")
+                if "ZFRR_CLASSIC" in DATA_MATRIX: regimes_to_display.append("ZFRR_CLASSIC")
             else:
-                regimes_to_display.append("ZFRR_CLASSIC")
+                if "ZFRR_CLASSIC" in DATA_MATRIX: regimes_to_display.append("ZFRR_CLASSIC")
 
         nb_zfu = str(row.get('NB_ZFU', '0')).strip()
         if nb_zfu not in ['0', 'nan', 'NON', '', 'Non']: 
             if date_crea <= date(2030, 12, 31):
-                regimes_to_display.append("ZFU")
+                if "ZFU" in DATA_MATRIX: regimes_to_display.append("ZFU")
 
         afr_val = str(row.get('AFR', '')).strip().capitalize()
         if afr_val in ['Integralement', 'Partiellement', 'Oui', 'Intégralement']:
              if date_crea <= date(2027, 12, 31):
-                regimes_to_display.append("AFR")
+                if "AFR" in DATA_MATRIX: regimes_to_display.append("AFR")
         
         nb_qpv = str(row.get('NB_QPV', '0')).strip()
         if nb_qpv not in ['0', 'nan', 'NON', '', 'Non']: 
             if date_crea <= date(2030, 12, 31):
-                regimes_to_display.append("QPV")
+                if "QPV" in DATA_MATRIX: regimes_to_display.append("QPV")
 
     if row_to_display is not None:
         st.divider()
@@ -493,7 +404,8 @@ if df is not None:
             if not st.session_state.show_all_mode:
                 st.success(f"✅ {len(regimes_to_display)} dispositif(s) identifié(s)")
             
-            st.markdown(render_html_table(regimes_to_display, row_to_display, date_crea), unsafe_allow_html=True)
+            # On passe explicitement DATA_MATRIX au render_html_table
+            st.markdown(render_html_table(regimes_to_display, row_to_display, date_crea, DATA_MATRIX), unsafe_allow_html=True)
             
             st.markdown("""
             <div class='no-print' style='text-align:center; margin-top:20px; color:#666;'>
@@ -507,4 +419,4 @@ if df is not None:
             st.warning("Aucun dispositif zoné majeur détecté pour cette commune.")
 
 else:
-    st.error("Erreur chargement Google Sheet.")
+    st.error("Erreur de chargement de la base des communes.")
