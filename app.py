@@ -230,16 +230,13 @@ def is_eligible_by_date(regime_key, date_op, matrix):
     start_str = str(matrix[regime_key].get("Date_debut", "")).strip()
     end_str = str(matrix[regime_key].get("Date_fin", "")).strip()
     
-    # Par défaut, si rien n'est renseigné, c'est toujours bon
     start_d = date.min
     end_d = date.max
     
     def parse_d(d_str):
         if not d_str or d_str.lower() in ['nan', 'null', '']: return None
         try:
-            # Tente le format YYYY-MM-DD
             if "-" in d_str: return date.fromisoformat(d_str)
-            # Tente le format DD/MM/YYYY
             elif "/" in d_str: return datetime.datetime.strptime(d_str, "%d/%m/%Y").date()
         except: pass
         return None
@@ -256,18 +253,16 @@ def is_eligible_by_date(regime_key, date_op, matrix):
 # 5. GÉNÉRATEUR HTML DU TABLEAU
 # ==============================================================================
 def get_zone_display(regime_key, row_data):
-    # Logique de récupération de la valeur brute
     raw_val = ""
-    # Gestion du QPV_2026 qui lit les mêmes colonnes géographiques
-    if regime_key == "ZFU" or regime_key == "QPV_2026": 
+    if regime_key == "ZFU": 
         raw_val = str(row_data.get('NB_ZFU', '')).strip()
-        # Si la commune est QPV, elle est aussi éligible au nouveau QPV_2026
-        if raw_val.lower() in ['0', 'nan', 'non', '', '-']:
-            raw_val = str(row_data.get('NB_QPV', '')).strip()
-            
-    elif regime_key == "QPV": raw_val = str(row_data.get('NB_QPV', '')).strip()
-    elif regime_key == "AFR": raw_val = str(row_data.get('AFR', '')).strip()
-    elif "ZFRR" in regime_key: raw_val = str(row_data.get('FRR', '')).strip()
+    # Le régime QPV_2026 (ainsi que QPV classique) lit strictement la colonne QPV/QPPV
+    elif regime_key in ["QPV", "QPV_2026"]: 
+        raw_val = str(row_data.get('NB_QPV', '')).strip()
+    elif regime_key == "AFR": 
+        raw_val = str(row_data.get('AFR', '')).strip()
+    elif "ZFRR" in regime_key: 
+        raw_val = str(row_data.get('FRR', '')).strip()
 
     if raw_val.lower() in ['nan', '0', '', 'non', '-']: return "-"
     if raw_val.lower() == "oui": return "Intégralement"
@@ -278,7 +273,7 @@ def get_zone_display(regime_key, row_data):
 def render_html_table(regimes, row_data, date_op, data_matrix):
     rows_config = [
         ("Références légales", "References_legales"),
-        ("Période d'application", "Periode"), # On affiche "Periode" pour l'humain
+        ("Période d'application", "Periode"), 
         ("Durée exonération IR/IS", "Duree_exo"),
         ("Impôts locaux (CFE / TFPB)", "Impots_locaux"),
         ("Exonérations sociales", "Social"),
@@ -401,7 +396,6 @@ if df is not None:
     regimes_to_display = []
 
     if st.session_state.show_all_mode:
-        # Affiche tout ce qui est éligible À CETTE DATE
         for r_key in DATA_MATRIX.keys():
             if is_eligible_by_date(r_key, date_crea, DATA_MATRIX):
                 regimes_to_display.append(r_key)
@@ -439,8 +433,8 @@ if df is not None:
         if is_qpv and is_eligible_by_date("QPV", date_crea, DATA_MATRIX):
             regimes_to_display.append("QPV")
             
-        # 5. QPV_2026 (Nouveau régime unifié - S'active si la ville est ZFU ou QPV)
-        if (is_zfu or is_qpv) and is_eligible_by_date("QPV_2026", date_crea, DATA_MATRIX):
+        # 5. QPV_2026 (Nouveau régime unifié basé STRICTEMENT sur QPPV)
+        if is_qpv and is_eligible_by_date("QPV_2026", date_crea, DATA_MATRIX):
             regimes_to_display.append("QPV_2026")
 
     if row_to_display is not None:
